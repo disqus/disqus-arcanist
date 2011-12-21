@@ -108,6 +108,15 @@ class DisqusLintEngine extends ArcanistLintEngine {
       }
     }
 
+    $js_linter = new ArcanistJSHintLinter();
+    $linters[] = $js_linter;
+    foreach ($paths as $path) {
+      if (preg_match('/\.js$/', $path)) {
+        $js_linter->addPath($path);
+        $js_linter->addData($path, $this->loadData($path));
+      }
+    }
+
     return $linters;
   }
 
