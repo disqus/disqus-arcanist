@@ -17,6 +17,7 @@ phutil_require_module('arcanist', 'lint/linter/text');
 phutil_require_module('arcanist', 'lint/linter/xhpast');
 phutil_require_module('arcanist', 'lint/severity');
 
+phutil_require_module('disqus', 'lint/linters/jshint');
 phutil_require_module('disqus', 'lint/linters/pep8');
 
 

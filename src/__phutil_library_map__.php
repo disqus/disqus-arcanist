@@ -8,12 +8,15 @@
 phutil_register_library_map(array(
   'class' =>
   array(
+    'ArcanistJSHintLinter' => 'lint/linters/jshint',
     'CoverageFieldSpecification' => 'diff',
     'DisqusConfiguration' => 'configuration',
     'DisqusDifferentialFieldSelector' => 'diff',
     'DisqusLintEngine' => 'lint',
     'DisqusPEP8Linter' => 'lint/linters/pep8',
     'DisqusUnitTestEngine' => 'unittest',
+    'MockManiphestTask' => 'event/__tests__',
+    'MockedProjectAssignmentEventListener' => 'event/__tests__',
     'ProjectAssignmentEventListener' => 'event',
     'ProjectAssignmentEventListenerTestCase' => 'event/__tests__',
   ),
@@ -22,12 +25,15 @@ phutil_register_library_map(array(
   ),
   'requires_class' =>
   array(
+    'ArcanistJSHintLinter' => 'ArcanistLinter',
     'CoverageFieldSpecification' => 'DifferentialFieldSpecification',
     'DisqusConfiguration' => 'ArcanistConfiguration',
     'DisqusDifferentialFieldSelector' => 'DifferentialFieldSelector',
     'DisqusLintEngine' => 'ArcanistLintEngine',
     'DisqusPEP8Linter' => 'ArcanistPEP8Linter',
     'DisqusUnitTestEngine' => 'ArcanistBaseUnitTestEngine',
+    'MockManiphestTask' => 'ManiphestTask',
+    'MockedProjectAssignmentEventListener' => 'ProjectAssignmentEventListener',
     'ProjectAssignmentEventListener' => 'PhutilEventListener',
     'ProjectAssignmentEventListenerTestCase' => 'PhabricatorTestCase',
   ),
