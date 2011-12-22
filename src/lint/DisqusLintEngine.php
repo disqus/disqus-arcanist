@@ -62,7 +62,7 @@ class DisqusLintEngine extends ArcanistLintEngine {
     $linters[] = $text_linter;
     foreach ($paths as $path) {
       $is_text = false;
-      if (preg_match('/\.(php|css|js|hpp|cpp|l|y)$/', $path)) {
+      if (preg_match('/\.(php|css|hpp|cpp|l|y)$/', $path)) {
         $is_text = true;
       }
       if ($is_text) {
@@ -125,11 +125,19 @@ class DisqusLintEngine extends ArcanistLintEngine {
     }
 
     $js_linter = new ArcanistJSHintLinter();
+    $jstext_linter = new ArcanistTextLinter();
+    $jstext_linter->setCustomSeverityMap(array(
+      ArcanistTextLinter::LINT_BAD_CHARSET => ArcanistLintSeverity::SEVERITY_DISABLED,
+      ArcanistTextLinter::LINT_LINE_WRAP => ArcanistLintSeverity::SEVERITY_DISABLED,
+    ));
     $linters[] = $js_linter;
+    $linters[] = $jstext_linter;
     foreach ($paths as $path) {
       if (preg_match('/\.js$/', $path)) {
         $js_linter->addPath($path);
         $js_linter->addData($path, $this->loadData($path));
+        $jstext_linter->addPath($path);
+        $jstext_linter->addData($path, $this->loadData($path));
       }
     }
 
