@@ -35,12 +35,13 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     $kleenex_conf = $working_copy->getConfig('unit.kleenex.config');
     $kleenex_section = $working_copy->getConfig('unit.kleenex.section');
 
-    $args = array('python', 'runtests.py', '--noinput', '--with-kleenex', '--with-json', '--json-file="test_results/nosetests.json"');
+    $args = array('python', 'runtests.py', '--noinput', '--with-kleenex',
+                  '--with-json', '--json-file="test_results/nosetests.json"');
     if (!empty($kleenex_conf)) {
       $args[] = sprintf('--kleenex-config="%s"', $kleenex_conf);
     }
     if (!empty($kleenex_section)) {
-      $args[] = sprintf('--kleenex-section="%s"', $kleenex_section);
+      $args[] = sprintf('--kleenex-config-section="%s"', $kleenex_section);
     }
 
     $cmd = implode(' ', $args);
