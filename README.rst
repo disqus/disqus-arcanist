@@ -32,3 +32,9 @@ ProjectAssignmentEventListener
 ==============================
 
 Automatically assigns an owner to a new task (where one is not set) based on the first assigned project's ownership.
+
+Add to your Phabricator's config::
+
+    'events.listeners' => array(
+      'ProjectAssignmentEventListener',
+    ),

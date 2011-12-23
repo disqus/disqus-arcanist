@@ -57,11 +57,13 @@ class ProjectAssignmentEventListener extends PhutilEventListener {
     $project = $this->getProject($project_phids[0]);
     $user_phid = $affiliation->getUserPHID();
     $task->setOwnerPHID($user_phid);
-    $task->setAuxiliaryAttribute(
-        'disqus:assign-reason',
-        sprintf('This was assigned automatically to the'.
-                ' owner of %s', $project->getName())
-    );
+    // TODO: Once we can modify transactions we should set assign-reason
+    // $task->save();
+    // $task->setAuxiliaryAttribute(
+    //     'disqus:assign-reason',
+    //     sprintf('This was assigned automatically to the'.
+    //             ' owner of %s', $project->getName())
+    // );
   }
 
   public function getProjectAffiliation($project_phid) {
@@ -73,7 +75,7 @@ class ProjectAssignmentEventListener extends PhutilEventListener {
 
   public function getProject($project_phid) {
     $project = id(new PhabricatorProject())->loadOneWhere(
-      'projectPHID = %s LIMIT 1', $project_phid);
+      'phid = %s LIMIT 1', $project_phid);
 
     return $project;
   }

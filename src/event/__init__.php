@@ -7,6 +7,7 @@
 
 
 phutil_require_module('phabricator', 'applications/project/storage/affiliation');
+phutil_require_module('phabricator', 'applications/project/storage/project');
 phutil_require_module('phabricator', 'infrastructure/events/constant/type');
 
 phutil_require_module('phutil', 'events/listener');
