@@ -28,10 +28,6 @@ class ProjectAssignmentEventListener extends PhutilEventListener {
   }
 
   public function handleEvent(PhutilEvent $event) {
-    if (!$event->getValue('new')) {
-        // task was changed, not created
-        return;
-    }
     $task = $event->getValue('task');
     if ($task->getOwnerPHID()) {
         // task was assigned manually
