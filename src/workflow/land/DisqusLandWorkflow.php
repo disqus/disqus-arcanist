@@ -95,7 +95,7 @@ EOTEXT
       );
     }
 
-    echo phutil_console_format("  * <fg:blue>Updating master</fg>..\n");
+    echo phutil_console_format("  * Updating <fg:blue>master</fg>..\n");
 
     execx('git checkout master');
     execx('git pull --rebase');
