@@ -95,13 +95,17 @@ EOTEXT
       );
     }
 
-    echo phutil_console_format("  * Updating <fg:blue>master</fg>..\n");
+    echo phutil_console_format("Landing branch <fg:green>%s</fg>..\n",
+      $branch_name);
+
+
+    echo phutil_console_format("* Updating <fg:blue>master</fg>..\n");
 
     execx('git checkout master');
     execx('git pull --rebase');
 
     echo phutil_console_format(
-      "  * Rebasing <fg:blue>master</fg> onto <fg:green>%s</fg>..\n",
+      "* Rebasing <fg:blue>master</fg> onto <fg:green>%s</fg>..\n",
       $branch_name);
 
     try {
@@ -114,7 +118,7 @@ EOTEXT
     execx('git checkout master');
 
     echo phutil_console_format(
-      "Merging <fg:green>%s</fg> into <fg:blue>master</fg>..\n",
+      "* Merging <fg:green>%s</fg> into <fg:blue>master</fg>..\n",
       $branch_name);
 
     execx('git merge %s', $branch_name);
