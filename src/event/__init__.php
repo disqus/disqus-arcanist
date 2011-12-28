@@ -15,4 +15,5 @@ phutil_require_module('phutil', 'events/listener');
 phutil_require_module('phutil', 'utils');
 
 
+phutil_require_source('DesignDecisionEventListener.php');
 phutil_require_source('ProjectAssignmentEventListener.php');

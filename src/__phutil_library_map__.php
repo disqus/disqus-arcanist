@@ -10,6 +10,7 @@ phutil_register_library_map(array(
   array(
     'ArcanistJSHintLinter' => 'lint/linters/jshint',
     'CoverageFieldSpecification' => 'diff',
+    'DesignDecisionEventListener' => 'event',
     'DisqusConfiguration' => 'configuration',
     'DisqusDifferentialFieldSelector' => 'diff',
     'DisqusLandWorkflow' => 'workflow/land',
@@ -28,6 +29,7 @@ phutil_register_library_map(array(
   array(
     'ArcanistJSHintLinter' => 'ArcanistLinter',
     'CoverageFieldSpecification' => 'DifferentialFieldSpecification',
+    'DesignDecisionEventListener' => 'PhutilEventListener',
     'DisqusConfiguration' => 'ArcanistConfiguration',
     'DisqusDifferentialFieldSelector' => 'DifferentialFieldSelector',
     'DisqusLandWorkflow' => 'ArcanistBaseWorkflow',
