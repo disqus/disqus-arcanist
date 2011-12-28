@@ -6,9 +6,12 @@
 
 
 
+phutil_require_module('disqus', 'event');
+
 phutil_require_module('phabricator', 'applications/maniphest/constants/priority');
 phutil_require_module('phabricator', 'applications/maniphest/constants/status');
 phutil_require_module('phabricator', 'applications/maniphest/constants/transactiontype');
+phutil_require_module('phabricator', 'applications/maniphest/storage/auxiliary');
 phutil_require_module('phabricator', 'applications/maniphest/storage/task');
 phutil_require_module('phabricator', 'applications/maniphest/storage/transaction');
 phutil_require_module('phabricator', 'applications/people/storage/user');
@@ -18,8 +21,6 @@ phutil_require_module('phabricator', 'applications/project/storage/project');
 phutil_require_module('phabricator', 'infrastructure/events/constant/type');
 phutil_require_module('phabricator', 'infrastructure/events/event');
 phutil_require_module('phabricator', 'infrastructure/testing/testcase');
-
-phutil_require_module('phutil', 'utils');
 
 
 phutil_require_source('ProjectAssignmentEventListenerTestCase.php');

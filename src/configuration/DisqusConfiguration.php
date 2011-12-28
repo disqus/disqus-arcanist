@@ -22,6 +22,26 @@
  * @group config
  */
 class DisqusConfiguration extends ArcanistConfiguration {
+  public function buildWorkflow($command) {
+    if ($command == 'land') {
+      return newv('DisqusLandWorkflow', array());
+    }
+
+    return parent::buildWorkflow($command);
+  }
+
+  public function buildAllWorkflows() {
+    $workflows = parent::buildAllWorkflows();
+
+    // Add 'land' workflow.
+    $workflows['land'] = newv('DisqusLandWorkflow', array());
+
+    // We dont use SVN
+    unset($workflows['svn-hook-pre-commit']);
+
+    return $workflows;
+  }
+
   public function didRunWorkflow($command, ArcanistBaseWorkflow $workflow, $err) {
     if ($command != 'diff') {
       return;
