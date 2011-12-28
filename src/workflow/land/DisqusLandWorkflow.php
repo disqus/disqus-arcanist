@@ -135,6 +135,8 @@ EOTEXT
       "Done! <fg:green>%s</fg> was landed into <fg:blue>master</fg>.\n",
       $branch_name);
 
+    echo "\n";
+
     echo phutil_console_format(
       "You can now '<fg:cyan>git push</fg>' to submit your changes upstream.");
 
