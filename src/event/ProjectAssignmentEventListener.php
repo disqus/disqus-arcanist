@@ -39,7 +39,7 @@ class ProjectAssignmentEventListener extends PhutilEventListener {
     }
     $project_phids = null;
     foreach ($event->getValue('transactions') as $transaction) {
-        if ($transaction->getTransactionType() != 'projects') {
+        if ($transaction->getTransactionType() != ManiphestTransactionType::TYPE_PROJECTS) {
             continue;
         }
         $project_phids = $transaction->getNewValue();
