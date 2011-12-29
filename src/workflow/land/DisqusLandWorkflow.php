@@ -138,7 +138,7 @@ EOTEXT
     echo "\n";
 
     echo phutil_console_format(
-      "You can now '<fg:cyan>git push</fg>' to submit your changes upstream.");
+      "You can now '<fg:cyan>git push</fg>' to submit your changes upstream.\n\n");
 
   }
 
