@@ -68,7 +68,22 @@ EOTEXT
     return false;
   }
 
+  public function getSupportedRevisionControlSystems() {
+    return array('git');
+  }
+
+  protected function isHistoryImmutable() {
+    $working_copy = $this->getWorkingCopy();
+    return ($working_copy->getConfig('immutable_history') === true);
+  }
+
   public function run() {
+    if ($this->isHistoryImmutable()) {
+      throw new ArcanistUsageException(
+        "arc land is not usable with immutable_history enabled."
+      );
+    }
+
     $repository_api = $this->getRepositoryAPI();
     if (!($repository_api instanceof ArcanistGitAPI)) {
       throw new ArcanistUsageException(
