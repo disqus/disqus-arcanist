@@ -109,6 +109,7 @@ class DisqusLintEngine extends ArcanistLintEngine {
     $pytext_linter->setCustomSeverityMap(array(
       ArcanistTextLinter::LINT_BAD_CHARSET => ArcanistLintSeverity::SEVERITY_DISABLED,
       ArcanistTextLinter::LINT_LINE_WRAP => ArcanistLintSeverity::SEVERITY_DISABLED,
+      ArcanistTextLinter::LINT_TAB_LITERAL => ArcanistLintSeverity::SEVERITY_DISABLED,
     ));
     $linters[] = $py_linter;
     $linters[] = $pep8_linter;
