@@ -31,10 +31,13 @@ class DisqusPEP8Linter extends ArcanistPEP8Linter {
 
     $options = $this->getPEP8Options();
 
+    $engine = $this->getEngine();
+    $root = $engine->getWorkingCopy()->getProjectRoot();
+
     list($rc, $stdout) = exec_manual(
       "/usr/bin/env python2.6 %s {$options} %s",
       $pep8_bin,
-      $this->getEngine()->getFilePathOnDisk($path));
+      $engine->getFilePathOnDisk($path));
 
     $lines = explode("\n", $stdout);
     $messages = array();
@@ -52,7 +55,7 @@ class DisqusPEP8Linter extends ArcanistPEP8Linter {
       $char = $matches[3];
       $text = $matches[5];
 
-      $file_lines = file($path);
+      $file_lines = file($root.'/'.$path);
       $original = substr($file_lines[$line-1], $char);
 
       switch ($code) {
