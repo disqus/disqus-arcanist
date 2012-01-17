@@ -125,13 +125,11 @@ class DisqusLintEngine extends ArcanistLintEngine {
       }
     }
 
-    $js_linter = new ArcanistJSHintLinter();
     $jstext_linter = new ArcanistTextLinter();
     $jstext_linter->setCustomSeverityMap(array(
       ArcanistTextLinter::LINT_BAD_CHARSET => ArcanistLintSeverity::SEVERITY_DISABLED,
       ArcanistTextLinter::LINT_LINE_WRAP => ArcanistLintSeverity::SEVERITY_DISABLED,
     ));
-    $linters[] = $js_linter;
     $linters[] = $jstext_linter;
     foreach ($paths as $path) {
       if (preg_match('/\.js$/', $path)) {

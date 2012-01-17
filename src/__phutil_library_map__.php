@@ -8,7 +8,6 @@
 phutil_register_library_map(array(
   'class' =>
   array(
-    'ArcanistJSHintLinter' => 'lint/linters/jshint',
     'CoverageFieldSpecification' => 'diff',
     'DesignDecisionEventListener' => 'event',
     'DisqusConfiguration' => 'configuration',
@@ -27,7 +26,6 @@ phutil_register_library_map(array(
   ),
   'requires_class' =>
   array(
-    'ArcanistJSHintLinter' => 'ArcanistLinter',
     'CoverageFieldSpecification' => 'DifferentialFieldSpecification',
     'DesignDecisionEventListener' => 'PhutilEventListener',
     'DisqusConfiguration' => 'ArcanistConfiguration',
