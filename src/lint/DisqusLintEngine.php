@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2011 Disqus, Inc.
+ * Copyright 2012 Disqus, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,8 +133,6 @@ class DisqusLintEngine extends ArcanistLintEngine {
     $linters[] = $jstext_linter;
     foreach ($paths as $path) {
       if (preg_match('/\.js$/', $path)) {
-        $js_linter->addPath($path);
-        $js_linter->addData($path, $this->loadData($path));
         $jstext_linter->addPath($path);
         $jstext_linter->addData($path, $this->loadData($path));
       }
