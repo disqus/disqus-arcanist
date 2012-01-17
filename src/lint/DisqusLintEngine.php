@@ -125,14 +125,23 @@ class DisqusLintEngine extends ArcanistLintEngine {
       }
     }
 
+    $jshint_linter = new ArcanistJSHintLinter();
     $jstext_linter = new ArcanistTextLinter();
     $jstext_linter->setCustomSeverityMap(array(
       ArcanistTextLinter::LINT_BAD_CHARSET => ArcanistLintSeverity::SEVERITY_DISABLED,
       ArcanistTextLinter::LINT_LINE_WRAP => ArcanistLintSeverity::SEVERITY_DISABLED,
     ));
+
+    $linters[] = $jshint_linter;
     $linters[] = $jstext_linter;
+
     foreach ($paths as $path) {
       if (preg_match('/\.js$/', $path)) {
+        // Check JavaScript file with JSHint.
+        $jshint_linter->addPath($path);
+        $jshint_linter->addData($path, $this->loadData($path));
+
+        // And with text linter to spot trailing spaces and other errors.
         $jstext_linter->addPath($path);
         $jstext_linter->addData($path, $this->loadData($path));
       }
