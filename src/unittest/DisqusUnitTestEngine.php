@@ -32,16 +32,13 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     $working_copy = $this->getWorkingCopy();
     $project_root = $working_copy->getProjectRoot();
-    $kleenex_conf = $working_copy->getConfig('unit.kleenex.config');
-    $kleenex_section = $working_copy->getConfig('unit.kleenex.section');
+    $quickunit_prefix = $working_copy->getConfig('unit.quickunit.prefix');
 
-    $args = array('python', 'runtests.py', '--noinput', '--with-kleenex',
+    $args = array('python', 'runtests.py', '--noinput', '--with-quickunit',
+                  '--quickunit-output="test_results/coverage.json"',
                   '--with-json', '--json-file="test_results/nosetests.json"');
-    if (!empty($kleenex_conf)) {
-      $args[] = sprintf('--kleenex-config="%s"', $kleenex_conf);
-    }
-    if (!empty($kleenex_section)) {
-      $args[] = sprintf('--kleenex-config-section="%s"', $kleenex_section);
+    if (!empty($quickunit_prefix)) {
+      $args[] = sprintf('--quickunit-prefix="%s"', $quickunit_prefix);
     }
 
     $cmd = implode(' ', $args);
@@ -87,10 +84,25 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
         "Unable to find 'nosetests.json' file.");
     }
 
+    // check for coverage file
+    $coverage_report_path = $project_root.'/test_results/coverage.json';
+    if (Filesystem::pathExists($coverage_report_path)) {
+      $coverage_report_data = Filesystem::readFile($coverage_report_path);
+      $coverage_report = json_decode($coverage_report_data, true);
+      if (!is_array($coverage_report)) {
+        throw new ArcanistUsageException(
+          "Your 'coverage.json' file is not a valid JSON file.");
+      }
+      $has_coverage = true;
+    } else {
+      $has_coverage = false;
+    }
+
     $results = array();
     foreach ($test_report['results'] as $result) {
       $obj = new ArcanistUnitTestResult();
-      $obj->setName($result['classname'].'.'.$result['name']);
+      $name = $result['classname'].'.'.$result['name'];
+      $obj->setName($name);
       $obj->setDuration($result['time']);
       if ($result['message']) {
         $obj->setUserData($result['message']."\n\n".$result['tb']);
@@ -109,10 +121,46 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
           $obj->setResult(ArcanistUnitTestResult::RESULT_BROKEN);
           break;
       }
+      if ($has_coverage) {
+        $report = $this->getCoverage($coverage_report, $name);
+        if ($report !== false) {
+          $obj->setCoverage($report);
+        }
+      }
+
       $results[] = $obj;
     }
 
     return $results;
+  }
+
+  private function getCoverage($coverage_report, $test) {
+    if (!array_key_exists($test, $coverage_report['tests'])) {
+      return false;
+    }
+    $coverage = $coverage_report['tests'][$test];
+    $report = array();
+    if (empty($coverage)) {
+      return $report;
+    }
+    foreach ($coverage as $filename => $file_coverage) {
+      $i = 1;
+      $covstring = '';
+      foreach ($file_coverage as $lineno => $covered) {
+        while ($lineno > $i) {
+          $covstring .= 'N';
+          $i += 1;
+        }
+        if ($covered) {
+          $covstring .= 'C';
+        } else {
+          $covstring .= 'U';
+        }
+        $i += 1;
+      }
+      $report[$filename] = $covstring;
+    }
+    return $report;
   }
 
 }

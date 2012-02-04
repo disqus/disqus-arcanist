@@ -30,33 +30,4 @@ class DisqusConfiguration extends ArcanistConfiguration {
 
     return $workflows;
   }
-
-  public function didRunWorkflow($command, ArcanistBaseWorkflow $workflow, $err) {
-    if ($command != 'diff') {
-      return;
-    }
-    $working_copy = $workflow->getWorkingCopy();
-    $project_root = $working_copy->getProjectRoot();
-
-    // check for coverage file
-    $bleed_report_path = $project_root.'/test_results/coverage.json';
-    if (Filesystem::pathExists($bleed_report_path)) {
-      $bleed_report_data = Filesystem::readFile($bleed_report_path);
-      $bleed_report = json_decode($bleed_report_data, true);
-      if (!is_array($bleed_report)) {
-        print "Your 'coverage.json' file is not a valid JSON file.";
-        return;
-        // throw new ArcanistUsageException(
-        //   "Your 'nosebleed.json' file is not a valid JSON file.");
-      }
-
-      $conduit = $workflow->getConduit();
-
-      $resp = $conduit->callMethodSynchronous('differential.setdiffproperty', array(
-        'diff_id' => $workflow->diffID,
-        'name' => 'disqus:coverage',
-        'data' => $bleed_report_data,
-      ));
-    }
-  }
 }
