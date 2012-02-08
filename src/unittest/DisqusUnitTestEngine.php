@@ -32,16 +32,10 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     $working_copy = $this->getWorkingCopy();
     $project_root = $working_copy->getProjectRoot();
-    $quickunit_prefix = $working_copy->getConfig('unit.quickunit.prefix');
 
     $args = array('python', 'runtests.py', '--noinput', '--with-quickunit',
                   '--quickunit-output="test_results/coverage.json"',
                   '--with-json', '--json-file="test_results/nosetests.json"');
-    if (!empty($quickunit_prefix)) {
-      foreach ($quickunit_prefix as $prefix) {
-        $args[] = sprintf('--quickunit-prefix="%s"', $prefix);
-      }
-    }
 
     $cmd = implode(' ', $args);
 
