@@ -38,7 +38,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
                   '--quickunit-output="test_results/coverage.json"',
                   '--with-json', '--json-file="test_results/nosetests.json"');
     if (!empty($quickunit_prefix)) {
-      foreach ($prefix as $quickunix_prefix) {
+      foreach ($quickunit_prefix as $prefix) {
         $args[] = sprintf('--quickunit-prefix="%s"', $prefix);
       }
     }
