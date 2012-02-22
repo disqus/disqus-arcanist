@@ -45,13 +45,13 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     if (is_resource($process)) {
 
-    #    fclose($pipes[0]);
-    #    fclose($pipes[1]);
-
         $stderr = '';
         while (!feof($pipes[2])) {
           $stderr .= fgets($pipes[2], 128);
         }
+
+        fclose($pipes[0]);
+        fclose($pipes[1]);
         fclose($pipes[2]);
 
         // It is important that you close any pipes before calling
