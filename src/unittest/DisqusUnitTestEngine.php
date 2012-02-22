@@ -39,12 +39,14 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     $cmd = implode(' ', $args);
 
+    echo "Running the following command for unit tests:\n" . $cmd . "\n";
+
     $process = proc_open($cmd, $descriptorspec, $pipes, $project_root, null);
 
     if (is_resource($process)) {
 
-        fclose($pipes[0]);
-        fclose($pipes[1]);
+    #    fclose($pipes[0]);
+    #    fclose($pipes[1]);
 
         $stderr = '';
         while (!feof($pipes[2])) {
