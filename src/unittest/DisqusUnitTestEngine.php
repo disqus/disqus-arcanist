@@ -100,7 +100,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
       $name = $result['classname'].'.'.$result['name'];
       $obj->setName($name);
       $obj->setDuration($result['time']);
-      if ($result['message']) {
+      if (!empty($result['message'])) {
         $obj->setUserData($result['message']."\n\n".$result['tb']);
       }
       switch ($result['type']) {
