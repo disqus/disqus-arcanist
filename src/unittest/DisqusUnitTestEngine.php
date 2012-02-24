@@ -23,13 +23,6 @@
  */
 class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
   public function run() {
-    $descriptorspec = array(
-       0 => array("pipe", "r"),
-       1 => array("pipe", "w"),
-       2 => array("pipe", "w")
-    );
-    $pipes = array();
-
     $working_copy = $this->getWorkingCopy();
     $project_root = $working_copy->getProjectRoot();
 
@@ -41,32 +34,10 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     echo "Running the following command for unit tests:\n" . $cmd . "\n";
 
-    $process = proc_open($cmd, $descriptorspec, $pipes, $project_root, null);
+    $future = new ExecFuture($cmd);
+    $future->setCWD($project_root);
 
-    if (is_resource($process)) {
-
-        $stderr = '';
-        while (!feof($pipes[2])) {
-          $stderr .= fgets($pipes[2], 128);
-        }
-
-        fclose($pipes[0]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        // It is important that you close any pipes before calling
-        // proc_close in order to avoid a deadlock
-        $return_value = proc_close($process);
-
-        if ($return_value != 0) {
-          throw new ArcanistUsageException('Test runner failed with return value of '.
-            $return_value.'.\nStderr was:\n\n'.$stderr);
-        }
-
-    } else {
-      // TODO: need to handle this correctly
-      throw new ArcanistUsageException('Test runner failed');
-    }
+    list($stdout, $stderr) = $future->resolvex();
 
     // check for json file
     $test_report_path = $project_root.'/test_results/nosetests.json';

@@ -8,7 +8,5 @@
 
 phutil_require_module('arcanist', 'configuration');
 
-phutil_require_module('phutil', 'filesystem');
-
 
 phutil_require_source('DisqusConfiguration.php');

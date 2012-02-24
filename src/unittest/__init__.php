@@ -11,6 +11,7 @@ phutil_require_module('arcanist', 'unit/engine/base');
 phutil_require_module('arcanist', 'unit/result');
 
 phutil_require_module('phutil', 'filesystem');
+phutil_require_module('phutil', 'future/exec');
 
 
 phutil_require_source('DisqusUnitTestEngine.php');
