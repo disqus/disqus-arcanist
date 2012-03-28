@@ -35,18 +35,6 @@ Add to your client's .arcconfig::
       "unit_engine": "DisqusUnitTestEngine",
     }
 
-DisqusLintEngine
-================
-
-Implements most of the basic linters provided by Arcanist, in addition to a modified PEP8 linter (slightly less strict),
-and an additional JSHint linter.
-
-Add to your client's .arcconfig::
-
-    {
-      "lint_engine": "DisqusLintEngine",
-    }
-
 ProjectAssignmentEventListener
 ==============================
 
