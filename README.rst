@@ -4,6 +4,13 @@ Phabricator Extensions
 This repository is a collection (known as libdisqus) of extensions for `Phabricator <http://phabricator.org/>`_, a tool
 originally open sourced by Facebook for task management and code review.
 
+Installing Arcanist Globally
+============================
+
+You'll need write access to /usr/local::
+
+    $ curl -L https://raw.github.com/disqus/disqus-arcanist/master/getarcanist.sh | sh
+
 DisqusUnitTestEngine
 ====================
 
