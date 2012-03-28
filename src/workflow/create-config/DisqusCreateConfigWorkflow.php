@@ -82,9 +82,6 @@ EOTEXT
   "copyright_holder": "Disqus, Inc.",
   "immutable_history": false,
   "differential.field-selector": "DisqusDifferentialFieldSelector",
-  "phutil_libraries": {
-      "disqus": "/Users/dcramer/.virtualenvs/disqus/include/php/libdisqus/src"
-  },
   "unit_engine": "DisqusUnitTestEngine",
   "lint_engine": "ComprehensiveLintEngine",
   "lint.pep8.options": "--ignore=W391,W292,W293,E501,E225",
