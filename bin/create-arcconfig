@@ -1,0 +1,42 @@
+#!/bin/bash
+
+root=$@
+if [ -z $root ]; then
+    root=$PWD
+fi
+
+root=$(dirname "$root")/$(basename "$root")
+
+arc_path="${root}/.arcconfig"
+
+if [ -e $arc_path ]; then
+  echo "There is already a configuration file at $arc_path."
+  echo "Do you want to continue and overwrite the existing file? [yN]"
+
+  read ok
+
+  if [[ $ok -ne "y" && $ok -ne "Y" ]]; then
+    exit 0
+  fi
+fi
+
+project_id=$(echo $root | awk -F/ '{print $3}')
+
+echo "Creating default .arcconfig at '$arc_path'"
+
+{ cat <<EOT
+{
+  "project_id": "$project_id",
+  "conduit_uri" : "http://phabricator.local.disqus.net/",
+  "arcanist_configuration": "DisqusConfiguration",
+  "copyright_holder": "Disqus, Inc.",
+  "immutable_history": false,
+  "differential.field-selector": "DisqusDifferentialFieldSelector",
+  "unit_engine": "DisqusUnitTestEngine",
+  "lint_engine": "ComprehensiveLintEngine",
+  "lint.pep8.options": "--ignore=W391,W292,W293,E501,E225",
+  "lint.jshint.prefix": "node_modules/jshint/bin",
+  "lint.jshint.bin": "hint"
+}
+EOT
+} >> $arc_path
