@@ -1,0 +1,1 @@
+curl -L https://raw.github.com/disqus/disqus-arcanist/master/getarcanist.sh | sh
