@@ -44,4 +44,4 @@ echo "Creating default .arcconfig at '$arc_path'"
   }
 }
 EOT
-} >> $arc_path
+} > $arc_path
