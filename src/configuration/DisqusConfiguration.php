@@ -22,18 +22,6 @@
  * @group config
  */
 class DisqusConfiguration extends ArcanistConfiguration {
-  public function buildWorkflow($command) {
-    if ($command == 'git-configure-template') {
-      return newv('DisqusGitConfigureTemplateWorkflow', array());
-    }
-
-    if ($command == 'create-config') {
-      return newv('DisqusCreateConfigWorkflow', array());
-    }
-
-    return parent::buildWorkflow($command);
-  }
-
   public function buildAllWorkflows() {
     $workflows = parent::buildAllWorkflows();
 
