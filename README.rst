@@ -11,17 +11,13 @@ You'll need write access to /usr/local::
 
     $ curl -L https://raw.github.com/disqus/disqus-arcanist/master/getarcanist.sh | sh
 
-This will give you access to the following additional commands:
+This will give you access to the following additional command:
 
-**arc create-config [path]**
+**create-arcconfig [path]**
 
 Generates a .arcconfig based on the global arcanist installation at the given path.
 
 If path is not set, it generates it in the current working directory.
-
-**arc git-configure-template**
-
-Sets commit.template to the arcanist git template.
 
 DisqusUnitTestEngine
 ====================
