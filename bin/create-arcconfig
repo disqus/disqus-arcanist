@@ -20,7 +20,7 @@ if [ -e $arc_path ]; then
   fi
 fi
 
-project_id=$(echo $root | awk -F/ '{print $3}')
+project_id=$(echo "$root" | python -c "import sys; print sys.stdin.read().rsplit('/', 1)[-1]")
 
 libdisqus_path=/usr/local/include/php/libdisqus/src
 
