@@ -23,12 +23,24 @@
  */
 class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
   public function run() {
+    $this->checkRequirements();
+
+    $results = $this->runUnitTests();
+
+    return $results;
+  }
+
+  private function runUnitTests(){
     $working_copy = $this->getWorkingCopy();
     $project_root = $working_copy->getProjectRoot();
 
+    if (!file_exists($project_root.'/runtests.py')) {
+      return array();
+    }
+
     $args = array('python', 'runtests.py', '--noinput', '--with-quickunit',
-                  '--quickunit-output="test_results/coverage.json"',
-                  '--with-json', '--json-file="test_results/nosetests.json"');
+              '--quickunit-output="test_results/coverage.json"',
+              '--with-json', '--json-file="test_results/nosetests.json"');
 
     $cmd = implode(' ', $args);
 
@@ -101,6 +113,24 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     }
 
     return $results;
+  }
+
+  private function checkRequirements() {
+    $working_copy = $this->getWorkingCopy();
+    $piplint_files = $working_copy->getConfig('unit.piplint.files');
+    if (empty($piplint_files)) {
+      return;
+    }
+
+    $args = array('piplint');
+    $args = array_merge($args, explode(',', $piplint_files));
+
+    $cmd = implode(' ', $args);
+
+    $future = new ExecFuture($cmd);
+    $future->setCWD($project_root);
+
+    list($stdout, $stderr) = $future->resolvex();
   }
 
   private function getCoverage($coverage_report, $test) {
