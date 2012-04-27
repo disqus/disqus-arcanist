@@ -132,7 +132,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     $future = new ExecFuture($cmd);
     $future->setCWD($project_root);
 
-    list($stdout, $stderr) = $future->resolvex();
+    $future->resolvex();
   }
 
   private function getCoverage($coverage_report, $test) {
