@@ -117,13 +117,15 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
   private function checkRequirements() {
     $working_copy = $this->getWorkingCopy();
+    $project_root = $working_copy->getProjectRoot();
+
     $piplint_files = $working_copy->getConfig('unit.piplint.files');
     if (empty($piplint_files)) {
       return;
     }
 
     $args = array('piplint');
-    $args = array_merge($args, explode(',', $piplint_files));
+    $args = array_merge($args, $piplint_files);
 
     $cmd = implode(' ', $args);
 
