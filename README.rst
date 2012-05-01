@@ -9,7 +9,7 @@ Installing Arcanist Globally
 
 You'll need write access to /usr/local::
 
-    $ curl -L https://raw.github.com/disqus/disqus-arcanist/master/getarcanist.sh | sh
+    $ curl -L https://raw.github.com/disqus/disqus-arcanist/master/getarcanist.sh | sudo sh
 
 This will give you access to the following additional commands:
 
