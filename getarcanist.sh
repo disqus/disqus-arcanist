@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 # Downloads arcanist, libphutil, etc and configures your system
 
