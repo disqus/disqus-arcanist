@@ -10,7 +10,7 @@ mkdir -p $PHP_DIR || exit -1
 # Install or update libphutil
 echo "Updating libphutil.."
 if [ -e "$PHP_DIR/libphutil" ]; then
-    cd "$PHP_DIR/libphutil" && git pull || exit -1
+    cd "$PHP_DIR/libphutil" && git pull origin master || exit -1
 else
     git clone git://github.com/facebook/libphutil.git "$PHP_DIR/libphutil" || exit -1
 fi
@@ -18,7 +18,7 @@ fi
 # Install or update arcanist
 echo "Updating arcanist.."
 if [ -e "$PHP_DIR/arcanist" ]; then
-    cd "$PHP_DIR/arcanist" && git pull || exit -1
+    cd "$PHP_DIR/arcanist" && git pull origin master || exit -1
 else
     git clone git://github.com/facebook/arcanist.git "$PHP_DIR/arcanist" || exit -1
 fi
@@ -26,7 +26,7 @@ fi
 # Install or update phabricator
 echo "Updating phabricator.."
 if [ -e "$PHP_DIR/phabricator" ]; then
-    cd "$PHP_DIR/phabricator" && git pull || exit -1
+    cd "$PHP_DIR/phabricator" && git pull origin master || exit -1
 else
     git clone git://github.com/facebook/phabricator.git "$PHP_DIR/phabricator" || exit -1
 fi
@@ -34,7 +34,7 @@ fi
 # Install or update libdisqus
 echo "Updating libdisqus.."
 if [ -e "$PHP_DIR/libdisqus" ]; then
-    cd "$PHP_DIR/libdisqus" && git pull || exit -1
+    cd "$PHP_DIR/libdisqus" && git pull origin master || exit -1
 else
     git clone git://github.com/disqus/disqus-arcanist.git "$PHP_DIR/libdisqus" || exit -1
 fi
