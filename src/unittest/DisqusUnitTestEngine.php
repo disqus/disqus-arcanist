@@ -38,7 +38,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
       return array();
     }
 
-    $args = array('python', 'runtests.py', '--noinput', '--with-quickunit',
+    $args = array('python', 'runtests.py', '--with-quickunit',
               '--quickunit-output="test_results/coverage.json"',
               '--with-json', '--json-file="test_results/nosetests.json"');
 
