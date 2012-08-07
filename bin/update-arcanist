@@ -1,1 +1,1 @@
-curl -L https://raw.github.com/disqus/disqus-arcanist/master/getarcanist.sh | sh
+curl -L https://raw.github.com/disqus/disqus-arcanist/master/getarcanist.sh 2&> /dev/null | sh
