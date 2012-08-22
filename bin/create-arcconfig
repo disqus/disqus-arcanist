@@ -28,6 +28,7 @@ echo "Creating default .arcconfig at '$arc_path'"
 
 { cat <<EOT
 {
+  "base": "git:merge-base(origin/master), arc:upstream, git:HEAD^",
   "project_id": "$project_id",
   "conduit_uri" : "http://phabricator.local.disqus.net/",
   "arcanist_configuration": "DisqusConfiguration",
