@@ -2,10 +2,24 @@
 
 # Downloads arcanist, libphutil, etc and configures your system
 
-BIN_DIR="/usr/local/bin"
-PHP_DIR="/usr/local/include/php"
+LOC_DIR="/usr/local"
+BIN_DIR="$LOC_DIR/bin"
+PHP_DIR="$LOC_DIR/include/php"
 
-mkdir -p $PHP_DIR || exit -1
+if [ ! -w "$LOC_DIR" ]; then
+    if [ -z "$SUDO_USER" ]; then
+        echo "Re-running installation with sudo (no permission on /usr/local for current user)."
+        sudo sh "$PWD/$0" $*
+        exit $?
+    else
+        echo "We can't seem to access /usr/local. Please check permissions on this folder and try again."
+        exit -1
+    fi;
+fi;
+
+if [ ! -e "$PHP_DIR" ]; then
+    mkdir -p $PHP_DIR || exit -1
+fi;
 
 # Install or update libphutil
 echo "Updating libphutil.."
