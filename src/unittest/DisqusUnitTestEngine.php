@@ -19,98 +19,32 @@
 /**
  * Very basic unit test engine which runs tests using Nose.
  *
+ * Requires the following packages:
+ *  - nose-quickunit
+ *  - nose >= 1.2
+ *  - piplint
+ *
+ * Makes the assumption that you have a 'runtests.py' file which
+ * is your designated nose test runner.
+ *
  * @group unitrun
  */
 class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
   public function run() {
-    $this->checkRequirements();
-
-    $results = $this->runUnitTests();
+    $results = $this->runTests();
 
     return $results;
   }
 
-  private function runUnitTests(){
+  private function runTests() {
+    $this->checkRequirements();
+
     $working_copy = $this->getWorkingCopy();
     $project_root = $working_copy->getProjectRoot();
 
-    if (!file_exists($project_root.'/runtests.py')) {
-      return array();
-    }
+    list($xunit_path, $coverage_path) = $this->runTestSuite($project_root);
 
-    $args = array('python', 'runtests.py', '--with-quickunit',
-              '--quickunit-output="test_results/coverage.json"',
-              '--with-json', '--json-file="test_results/nosetests.json"');
-
-    $cmd = implode(' ', $args);
-
-    echo "Running the following command for unit tests:\n" . $cmd . "\n";
-
-    $future = new ExecFuture($cmd);
-    $future->setCWD($project_root);
-
-    list($stdout, $stderr) = $future->resolvex();
-
-    // check for json file
-    $test_report_path = $project_root.'/test_results/nosetests.json';
-    if (Filesystem::pathExists($test_report_path)) {
-      $test_report_data = Filesystem::readFile($test_report_path);
-      $test_report = json_decode($test_report_data, true);
-      if (!is_array($test_report)) {
-        throw new ArcanistUsageException(
-          "Your 'nosetests.json' file is not a valid JSON file.");
-      }
-    } else {
-      throw new ArcanistUsageException(
-        "Unable to find 'nosetests.json' file.");
-    }
-
-    // check for coverage file
-    $coverage_report_path = $project_root.'/test_results/coverage.json';
-    if (Filesystem::pathExists($coverage_report_path)) {
-      $coverage_report_data = Filesystem::readFile($coverage_report_path);
-      $coverage_report = json_decode($coverage_report_data, true);
-      if (!is_array($coverage_report)) {
-        throw new ArcanistUsageException(
-          "Your 'coverage.json' file is not a valid JSON file.");
-      }
-      $has_coverage = true;
-    } else {
-      $has_coverage = false;
-    }
-
-    $results = array();
-    foreach ($test_report['results'] as $result) {
-      $obj = new ArcanistUnitTestResult();
-      $name = $result['classname'].'.'.$result['name'];
-      $obj->setName($name);
-      $obj->setDuration($result['time']);
-      if (!empty($result['message'])) {
-        $obj->setUserData($result['message']."\n\n".$result['tb']);
-      }
-      switch ($result['type']) {
-        case "success":
-          $obj->setResult(ArcanistUnitTestResult::RESULT_PASS);
-          break;
-        case "failure":
-          $obj->setResult(ArcanistUnitTestResult::RESULT_FAIL);
-          break;
-        case "skipped":
-          $obj->setResult(ArcanistUnitTestResult::RESULT_SKIP);
-          break;
-        case "error":
-          $obj->setResult(ArcanistUnitTestResult::RESULT_BROKEN);
-          break;
-      }
-      if ($has_coverage) {
-        $report = $this->getCoverage($coverage_report, $name);
-        if ($report !== false) {
-          $obj->setCoverage($report);
-        }
-      }
-
-      $results[] = $obj;
-    }
+    $results = $this->buildTestResults($xunit_path, $coverage_path);
 
     return $results;
   }
@@ -135,33 +69,171 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     $future->resolvex();
   }
 
-  private function getCoverage($coverage_report, $test) {
-    if (!array_key_exists($test, $coverage_report['tests'])) {
-      return false;
+  private function runTestSuite($project_root) {
+    if (!file_exists($project_root.'/runtests.py')) {
+      return array();
     }
-    $coverage = $coverage_report['tests'][$test];
-    $report = array();
-    if (empty($coverage)) {
-      return $report;
+    $xunit_path = $project_root.'/test_results/nosetests.xml';
+    $coverage_path = $project_root.'/test_results/coverage.xml';
+
+    $cmds = array(
+      csprintf('coverage run runtests.py --with-quickunit'.
+        ' --with-xunit --xunit-file=%s', $xunit_path),
+      csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $this->getPaths())),
+    );
+
+    foreach ($cmds as $cmd_line) {
+      $future = new ExecFuture("%C", $cmd_line);
+      $future->setCWD($project_root);
+      $future->resolvex();
     }
-    foreach ($coverage as $filename => $file_coverage) {
-      $i = 1;
-      $covstring = '';
-      foreach ($file_coverage as $lineno => $covered) {
-        while ($lineno > $i) {
-          $covstring .= 'N';
-          $i += 1;
+
+    return array($xunit_path, $coverage_path);
+  }
+
+  private function buildTestResults($xunit_path, $coverage_path) {
+    $coverage_report = $this->readCoverage($coverage_path);
+
+    $xunit_dom = new DOMDocument();
+    $xunit_dom->loadXML(Filesystem::readFile($xunit_path));
+
+    $results = array();
+    $testcases = $xunit_dom->getElementsByTagName("testcase");
+    foreach ($testcases as $testcase) {
+      $classname = $testcase->getAttribute("classname");
+      $name = $testcase->getAttribute("name");
+      $time = $testcase->getAttribute("time");
+
+      $status = ArcanistUnitTestResult::RESULT_PASS;
+      $user_data = "";
+
+      // A skipped test is a test which was ignored using framework
+      // mechanizms (e.g. @skip decorator)
+      $skipped = $testcase->getElementsByTagName("skipped");
+      if ($skipped->length > 0) {
+        $status = ArcanistUnitTestResult::RESULT_SKIP;
+        $messages = array();
+        for ($ii = 0; $ii < $skipped->length; $ii++) {
+          $messages[] = trim($skipped->item($ii)->nodeValue, " \n");
         }
-        if ($covered) {
-          $covstring .= 'C';
-        } else {
-          $covstring .= 'U';
-        }
-        $i += 1;
+
+        $user_data .= implode("\n", $messages);
       }
-      $report[$filename] = $covstring;
+
+      // Failure is a test which the code has explicitly failed by using
+      // the mechanizms for that purpose. e.g., via an assertEquals
+      $failures = $testcase->getElementsByTagName("failure");
+      if ($failures->length > 0) {
+        $status = ArcanistUnitTestResult::RESULT_FAIL;
+        $messages = array();
+        for ($ii = 0; $ii < $failures->length; $ii++) {
+          $messages[] = trim($failures->item($ii)->nodeValue, " \n");
+        }
+
+        $user_data .= implode("\n", $messages)."\n";
+      }
+
+      // An errored test is one that had an unanticipated problem. e.g., an
+      // unchecked throwable, or a problem with an implementation of the
+      // test.
+      $errors = $testcase->getElementsByTagName("error");
+      if ($errors->length > 0) {
+        $status = ArcanistUnitTestResult::RESULT_BROKEN;
+        $messages = array();
+        for ($ii = 0; $ii < $errors->length; $ii++) {
+          $messages[] = trim($errors->item($ii)->nodeValue, " \n");
+        }
+
+        $user_data .= implode("\n", $messages)."\n";
+      }
+
+      $result = new ArcanistUnitTestResult();
+      $result->setName($classname.".".$name);
+      $result->setResult($status);
+      $result->setDuration($time);
+      $result->setUserData($user_data);
+      // this is technically incorrect, but since phabricator aggregates it we dont care
+      $result->setCoverage($coverage_report);
+
+      $results[] = $result;
     }
-    return $report;
+
+    return $results;
+  }
+
+  public function readCoverage($path) {
+    $coverage_dom = new DOMDocument();
+    $coverage_dom->loadXML(Filesystem::readFile($path));
+
+    $paths = $this->getPaths();
+    $reports = array();
+    $classes = $coverage_dom->getElementsByTagName("class");
+
+    foreach ($classes as $class) {
+      // filename is actually python module path with ".py" at the end,
+      // e.g.: tornado.web.py
+      $relative_path = explode(".", $class->getAttribute("filename"));
+      array_pop($relative_path);
+      $relative_path = implode("/", $relative_path);
+
+      // first we check if the path is a directory (a Python package), if it is
+      // set relative and absolute paths to have __init__.py at the end.
+      $absolute_path = Filesystem::resolvePath($relative_path);
+      if (is_dir($absolute_path)) {
+        $relative_path .= "/__init__.py";
+        $absolute_path .= "/__init__.py";
+      }
+
+      // then we check if the path with ".py" at the end is file (a Python
+      // submodule), if it is - set relative and absolute paths to have
+      // ".py" at the end.
+      if (is_file($absolute_path.".py")) {
+        $relative_path .= ".py";
+        $absolute_path .= ".py";
+      }
+
+      if (!file_exists($absolute_path)) {
+        continue;
+      }
+
+      if (!in_array($relative_path, $paths)) {
+        continue;
+      }
+
+      // get total line count in file
+      $line_count = count(file($absolute_path));
+
+      $coverage = "";
+      $start_line = 1;
+      $lines = $class->getElementsByTagName("line");
+      for ($ii = 0; $ii < $lines->length; $ii++) {
+        $line = $lines->item($ii);
+
+        $next_line = intval($line->getAttribute("number"));
+        for ($start_line; $start_line < $next_line; $start_line++) {
+          $coverage .= "N";
+        }
+
+        if (intval($line->getAttribute("hits")) == 0) {
+          $coverage .= "U";
+        }
+        else if (intval($line->getAttribute("hits")) > 0) {
+          $coverage .= "C";
+        }
+
+        $start_line++;
+      }
+
+      if ($start_line < $line_count) {
+        foreach (range($start_line, $line_count) as $line_num) {
+          $coverage .= "N";
+        }
+      }
+
+      $reports[$relative_path] = $coverage;
+    }
+
+    return $reports;
   }
 
 }
