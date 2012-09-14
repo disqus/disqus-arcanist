@@ -6,11 +6,10 @@ LOC_DIR="/usr/local"
 BIN_DIR="$LOC_DIR/bin"
 PHP_DIR="$LOC_DIR/include/php"
 
-if [ ! -w "$LOC_DIR" ]; then
+if [ ! -w "$BIN_DIR" ] || [ ! -w "$PHP_DIR" ]; then
     if [ -z "$SUDO_USER" ]; then
         echo "Re-running installation with sudo (no permission on /usr/local for current user)."
-        sudo /bin/bash "$PWD/$0" $*
-        exit $?
+        exec sudo /bin/bash "$PWD/$0" $*
     else
         echo "We can't seem to access /usr/local. Please check permissions on this folder and try again."
         exit -1
