@@ -9,7 +9,7 @@ PHP_DIR="$LOC_DIR/include/php"
 if [ ! -w "$LOC_DIR" ]; then
     if [ -z "$SUDO_USER" ]; then
         echo "Re-running installation with sudo (no permission on /usr/local for current user)."
-        sudo sh "$PWD/$0" $*
+        sudo /bin/bash "$PWD/$0" $*
         exit $?
     else
         echo "We can't seem to access /usr/local. Please check permissions on this folder and try again."
