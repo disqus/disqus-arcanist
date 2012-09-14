@@ -117,7 +117,11 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
   }
 
   private function buildTestResults($xunit_path, $coverage_path) {
-    $coverage_report = $this->readCoverage($coverage_path);
+    if (file_exists($coverage_path)) {
+      $coverage_report = $this->readCoverage($coverage_path);
+    } else {
+      $coverage_report = null;
+    }
 
     $xunit_dom = new DOMDocument();
     $xunit_dom->loadXML(Filesystem::readFile($xunit_path));
@@ -178,7 +182,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
       $result->setDuration($time);
       $result->setUserData($user_data);
       // this is technically incorrect, but since phabricator aggregates it we dont care
-      if (file_exists($coverage_path)) {
+      if ($coverage_report !== null) {
         $result->setCoverage($coverage_report);
       }
 
