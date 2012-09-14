@@ -69,6 +69,16 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     $future->resolvex();
   }
 
+  private function getPythonPaths(){
+    $results = array();
+    foreach ($this->getPaths() as $path) {
+      if (substr($path, -3) == '.py') {
+        $results[] = $path;
+      }
+    }
+    return $results;
+  }
+
   private function runTestSuite($project_root) {
     if (!file_exists($project_root.'/runtests.py')) {
       return array();
@@ -76,11 +86,26 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     $xunit_path = $project_root.'/test_results/nosetests.xml';
     $coverage_path = $project_root.'/test_results/coverage.xml';
 
+    // Remove existing files so we cannot report old results
+    if (file_exists($xunit_path)) {
+      unlink($xunit_path);
+    }
+
+    if (file_exists($coverage_path)) {
+      unlink($coverage_path);
+    }
+
+    $pythonPaths = $this->getPythonPaths();
+
     $cmds = array(
       csprintf('coverage run runtests.py --with-quickunit'.
         ' --with-xunit --xunit-file=%s', $xunit_path),
-      csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $this->getPaths())),
     );
+
+    // If we run coverage with only non-python files it will error
+    if (!empty($pythonPaths)) {
+      $cmds[] = csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths));
+    }
 
     foreach ($cmds as $cmd_line) {
       $future = new ExecFuture("%C", $cmd_line);
@@ -153,7 +178,9 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
       $result->setDuration($time);
       $result->setUserData($user_data);
       // this is technically incorrect, but since phabricator aggregates it we dont care
-      $result->setCoverage($coverage_report);
+      if (file_exists($coverage_path)) {
+        $result->setCoverage($coverage_report);
+      }
 
       $results[] = $result;
     }
