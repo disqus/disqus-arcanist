@@ -97,27 +97,33 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     $pythonPaths = $this->getPythonPaths();
 
-    $cmds = array(
-      csprintf('coverage run runtests.py --with-quickunit'.
-        ' --with-xunit --xunit-file=%s', $xunit_path),
-    );
+    if ($this->getEnableCoverage() !== false) {
+      $future = new ExecFuture("%C", csprintf('coverage run runtests.py --with-quickunit'.
+          ' --with-xunit --xunit-file=%s', $xunit_path));
+      $future->setCWD($project_root);
+      $future->resolvex();
 
-    // If we run coverage with only non-python files it will error
-    if (!empty($pythonPaths)) {
-      $cmds[] = csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths));
-    }
-
-    foreach ($cmds as $cmd_line) {
-      $future = new ExecFuture("%C", $cmd_line);
+      // If we run coverage with only non-python files it will error
+      if (!empty($pythonPaths)) {
+        try {
+          $future = new ExecFuture("%C", csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths)));
+          $future->setCWD($project_root);
+          $future->resolvex();
+        } catch (Exception $ex) {
+          // we dont care about this exception
+        }
+      }
+    } else {
+      $future = new ExecFuture("%C", csprintf('python runtests.py --with-quickunit'.
+          ' --with-xunit --xunit-file=%s', $xunit_path));
       $future->setCWD($project_root);
       $future->resolvex();
     }
-
     return array($xunit_path, $coverage_path);
   }
 
   private function buildTestResults($xunit_path, $coverage_path) {
-    if (file_exists($coverage_path)) {
+    if ($this->getEnableCoverage() !== false && file_exists($coverage_path)) {
       $coverage_report = $this->readCoverage($coverage_path);
     } else {
       $coverage_report = null;
