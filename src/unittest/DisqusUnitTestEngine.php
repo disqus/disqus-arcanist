@@ -199,8 +199,13 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
   }
 
   public function readCoverage($path) {
+    $coverage_data = Filesystem::readFile($path);
+    if (empty($coverage_data)) {
+      return array();
+    }
+
     $coverage_dom = new DOMDocument();
-    $coverage_dom->loadXML(Filesystem::readFile($path));
+    $coverage_dom->loadXML($coverage_data);
 
     $paths = $this->getPaths();
     $reports = array();
