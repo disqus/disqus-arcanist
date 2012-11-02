@@ -46,7 +46,14 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     $results = $this->buildTestResults($xunit_path, $coverage_path);
 
-    return $results;
+    if (!$this->getJavascriptPaths()) {
+      return $results;
+    }
+
+    // If Javascript files have been touched, run Javascript tests
+    $xunit_path = $this->runJsTestSuite($project_root);
+    $js_results = $this->buildTestResults($xunit_path);
+    return array_merge($results, $js_results);
   }
 
   private function checkRequirements() {
@@ -79,50 +86,76 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     return $results;
   }
 
-  private function runTestSuite($project_root) {
+  private function getJavascriptPaths(){
+    $results = array();
+    foreach ($this->getPaths() as $path) {
+      if (substr($path, -3) == '.js') {
+        $results[] = $path;
+      }
+    }
+    return $results;
+  }
+
+  private function runTestSuite($project_root, $js=false) {
     if (!file_exists($project_root.'/runtests.py')) {
       return array();
     }
-    $xunit_path = $project_root.'/test_results/nosetests.xml';
-    $coverage_path = $project_root.'/test_results/coverage.xml';
+    $xunit_filename = $js ? 'hiro' : 'nosetests';
+    $xunit_path = $project_root.'/test_results/'.$xunit_filename.'.xml';
+    $coverage_path = null;
 
-    // Remove existing files so we cannot report old results
+    // Remove existing file so we cannot report old results
     if (file_exists($xunit_path)) {
       unlink($xunit_path);
     }
 
-    if (file_exists($coverage_path)) {
-      unlink($coverage_path);
-    }
+    $runtests_command = csprintf('runtests.py --with-xunit --xunit-file=%s', $xunit_path);
+    $exec = 'python';
 
-    $pythonPaths = $this->getPythonPaths();
+    if ($js) {
+      $runtests_command = $runtests_command.' --js';
+    } else {
+      $runtests_command = $runtests_command.' --with-quickunit';
+      if ($this->getEnableCoverage() !== false) {
+        $exec = 'coverage run';
 
-    if ($this->getEnableCoverage() !== false) {
-      $future = new ExecFuture("%C", csprintf('coverage run runtests.py --with-quickunit'.
-          ' --with-xunit --xunit-file=%s', $xunit_path));
-      $future->setCWD($project_root);
-      $future->resolvex();
-
-      // If we run coverage with only non-python files it will error
-      if (!empty($pythonPaths)) {
-        try {
-          $future = new ExecFuture("%C", csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths)));
-          $future->setCWD($project_root);
-          $future->resolvex();
-        } catch (Exception $ex) {
-          // we dont care about this exception
+        $pythonPaths = $this->getPythonPaths();
+        // If we run coverage with only non-python files it will error
+        if (!$pythonPaths) {
+          $coverage_path = $project_root.'/test_results/coverage.xml';
+          if (file_exists($coverage_path)) {
+            unlink($coverage_path);
+          }
+          try {
+            $future = new ExecFuture("%C", csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths)));
+            $future->setCWD($project_root);
+            $future->resolvex();
+          } catch (Exception $ex) {
+            // we dont care about this exception
+          }
         }
       }
-    } else {
-      $future = new ExecFuture("%C", csprintf('python runtests.py --with-quickunit'.
-          ' --with-xunit --xunit-file=%s', $xunit_path));
-      $future->setCWD($project_root);
-      $future->resolvex();
     }
+
+    $runtests_command = $exec.' '.$runtests_command;
+
+    print 'Running command: '.$runtests_command."\n";
+
+    $future = new ExecFuture("%C", $runtests_command);
+    $future->setCWD($project_root);
+    $future->resolvex();
+
+    print "DONE\n";
+
     return array($xunit_path, $coverage_path);
   }
 
-  private function buildTestResults($xunit_path, $coverage_path) {
+  private function runJsTestSuite($project_root) {
+    list($xunit_path,) = $this->runTestSuite($project_root, true);
+    return $xunit_path;
+  }
+
+  private function buildTestResults($xunit_path, $coverage_path=null) {
     if ($this->getEnableCoverage() !== false && file_exists($coverage_path)) {
       $coverage_report = $this->readCoverage($coverage_path);
     } else {
