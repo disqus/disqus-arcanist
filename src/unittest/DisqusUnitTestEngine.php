@@ -121,7 +121,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
         $pythonPaths = $this->getPythonPaths();
         // If we run coverage with only non-python files it will error
-        if (!$pythonPaths) {
+        if (!empty($pythonPaths)) {
           $coverage_path = $project_root.'/test_results/coverage.xml';
           if (file_exists($coverage_path)) {
             unlink($coverage_path);
@@ -139,13 +139,9 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     $runtests_command = $exec.' '.$runtests_command;
 
-    print 'Running command: '.$runtests_command."\n";
-
     $future = new ExecFuture("%C", $runtests_command);
     $future->setCWD($project_root);
     $future->resolvex();
-
-    print "DONE\n";
 
     return array($xunit_path, $coverage_path);
   }
