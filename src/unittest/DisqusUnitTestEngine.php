@@ -46,14 +46,57 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     $results = $this->buildTestResults($xunit_path, $coverage_path);
 
-    if (!$this->getJavascriptPaths()) {
-      return $results;
+    // If Javascript files have been touched, run Javascript tests
+    if ($this->getJavascriptPaths()) {
+      $xunit_path = $this->runJsTestSuite($project_root);
+      $js_results = $this->buildTestResults($xunit_path);
+      $results = array_merge($results, $js_results);
     }
 
-    // If Javascript files have been touched, run Javascript tests
-    $xunit_path = $this->runJsTestSuite($project_root);
-    $js_results = $this->buildTestResults($xunit_path);
-    return array_merge($results, $js_results);
+    if ($this->getEnableCoverage() !== false) {
+      $this->checkCoverage($results);
+    }
+
+    return $results;
+  }
+
+  private function checkCoverage($results) {
+    // TODO: this should check against the diff, not against the changed files
+    // as it is not the individuals responsibility to add coverage for code which
+    // was not changed as part of this diff
+    $coverage = array();
+    foreach ($results as $result) {
+      if ($result->getCoverage()) {
+        foreach ($result->getCoverage() as $file => $report) {
+          $coverage[$file][] = $report;
+        }
+      }
+    }
+
+    $coverage_amount = 0;
+    foreach ($coverage as $file => $reports) {
+      $report = ArcanistUnitTestResult::mergeCoverage($reports);
+
+      $cov = substr_count($report, 'C');
+      $uncov = substr_count($report, 'U');
+      if ($cov + $uncov) {
+        $coverage_amount = $cov / ($cov + $uncov);
+      } else {
+        $coverage_amount = 0;
+      }
+    }
+
+    $coverage_percent = round($coverage_amount * 100);
+
+    if ($coverage_percent < 90) {
+      $ok = phutil_console_confirm(
+        "The amount of test coverage for files affected by this diff is __{$coverage_percent}%__, ".
+        "which is less than the expected minimum of __90%__. Are you sure you want to submit ".
+        " this diff?");
+      if (!$ok) {
+        throw new ArcanistUserAbortException();
+      }
+    }
   }
 
   private function checkRequirements() {
