@@ -96,6 +96,12 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     return $results;
   }
 
+  private function unlink($filepath) {
+    if (file_exists($filepath)) {
+      unlink($filepath);
+    }
+  }
+
   private function runTestSuite($project_root, $js=false) {
     if (!file_exists($project_root.'/runtests.py')) {
       return array();
@@ -105,9 +111,8 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     $coverage_path = null;
 
     // Remove existing file so we cannot report old results
-    if (file_exists($xunit_path)) {
-      unlink($xunit_path);
-    }
+    $this->unlink($xunit_path);
+    $this->unlink($coverage_path);
 
     $runtests_command = csprintf('runtests.py --with-xunit --xunit-file=%s', $xunit_path);
     $exec = 'python';
@@ -132,9 +137,6 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
       // If we run coverage with only non-python files it will error
       if (!empty($pythonPaths)) {
         $coverage_path = $project_root.'/test_results/coverage.xml';
-        if (file_exists($coverage_path)) {
-          unlink($coverage_path);
-        }
         try {
           $future = new ExecFuture("%C", csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths)));
           $future->setCWD($project_root);
