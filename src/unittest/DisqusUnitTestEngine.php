@@ -118,22 +118,6 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
       $runtests_command = $runtests_command.' --with-quickunit';
       if ($this->getEnableCoverage() !== false) {
         $exec = 'coverage run';
-
-        $pythonPaths = $this->getPythonPaths();
-        // If we run coverage with only non-python files it will error
-        if (!empty($pythonPaths)) {
-          $coverage_path = $project_root.'/test_results/coverage.xml';
-          if (file_exists($coverage_path)) {
-            unlink($coverage_path);
-          }
-          try {
-            $future = new ExecFuture("%C", csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths)));
-            $future->setCWD($project_root);
-            $future->resolvex();
-          } catch (Exception $ex) {
-            // we dont care about this exception
-          }
-        }
       }
     }
 
@@ -142,6 +126,24 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     $future = new ExecFuture("%C", $runtests_command);
     $future->setCWD($project_root);
     $future->resolvex();
+
+    if (!$js && $this->getEnableCoverage() !== false) {
+      $pythonPaths = $this->getPythonPaths();
+      // If we run coverage with only non-python files it will error
+      if (!empty($pythonPaths)) {
+        $coverage_path = $project_root.'/test_results/coverage.xml';
+        if (file_exists($coverage_path)) {
+          unlink($coverage_path);
+        }
+        try {
+          $future = new ExecFuture("%C", csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths)));
+          $future->setCWD($project_root);
+          $future->resolvex();
+        } catch (Exception $ex) {
+          // we dont care about this exception
+        }
+      }
+    }
 
     return array($xunit_path, $coverage_path);
   }
