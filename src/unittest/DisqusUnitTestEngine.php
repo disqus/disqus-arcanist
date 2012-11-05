@@ -108,7 +108,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     }
     $xunit_filename = $js ? 'hiro' : 'nosetests';
     $xunit_path = $project_root.'/test_results/'.$xunit_filename.'.xml';
-    $coverage_path = null;
+    $coverage_path = $project_root.'/test_results/coverage.xml';
 
     // Remove existing file so we cannot report old results
     $this->unlink($xunit_path);
@@ -136,7 +136,6 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
       $pythonPaths = $this->getPythonPaths();
       // If we run coverage with only non-python files it will error
       if (!empty($pythonPaths)) {
-        $coverage_path = $project_root.'/test_results/coverage.xml';
         try {
           $future = new ExecFuture("%C", csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths)));
           $future->setCWD($project_root);
