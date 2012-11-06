@@ -121,7 +121,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
       $runtests_command = $runtests_command.' --js';
     } else {
       $runtests_command = $runtests_command.' --with-quickunit';
-      if ($this->getEnableCoverage()) {
+      if ($this->getEnableCoverage() !== false) {
         $exec = 'coverage run';
       }
     }
@@ -132,7 +132,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     $future->setCWD($project_root);
     $future->resolvex();
 
-    if (!$js && $this->getEnableCoverage()) {
+    if (!$js && $this->getEnableCoverage() !== false) {
       $pythonPaths = $this->getPythonPaths();
       // If we run coverage with only non-python files it will error
       if (!empty($pythonPaths)) {
@@ -155,7 +155,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
   }
 
   private function buildTestResults($xunit_path, $coverage_path=null) {
-    if ($this->getEnableCoverage() && file_exists($coverage_path)) {
+    if ($this->getEnableCoverage() !== false && file_exists($coverage_path)) {
       $coverage_report = $this->readCoverage($coverage_path);
     } else {
       $coverage_report = null;
