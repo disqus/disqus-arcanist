@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 # Downloads arcanist, libphutil, etc and configures your system
 
