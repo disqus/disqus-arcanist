@@ -9,7 +9,11 @@ PHP_DIR="$LOC_DIR/include/php"
 if [ ! -w "$BIN_DIR" ] || [ ! -w "$PHP_DIR" ]; then
     if [ -z "$SUDO_USER" ]; then
         echo "Re-running installation with sudo (no permission on /usr/local for current user)."
-        exec sudo /bin/sh $0 $*
+        if [ `uname` == "Darwin" ]; then
+            exec sudo /bin/bash $0 $*
+        else
+            exec sudo $0 $*
+        fi;
     else
         echo "We can't seem to access /usr/local. Please check permissions on this folder and try again."
         exit -1
