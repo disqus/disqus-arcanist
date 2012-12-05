@@ -1,5 +1,8 @@
 #!/bin/bash
 set -e
 
-curl -L https://raw.github.com/disqus/disqus-arcanist/master/installarcanist.sh -o /tmp/installarcanist.sh
-/bin/bash /tmp/installarcanist.sh
+INSTALL_SCRIPT="/tmp/installarcanist.sh"
+
+curl -L https://raw.github.com/disqus/disqus-arcanist/master/installarcanist.sh -o $INSTALL_SCRIPT
+/bin/bash $INSTALL_SCRIPT
+rm $INSTALL_SCRIPT
