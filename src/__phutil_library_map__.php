@@ -20,6 +20,7 @@ phutil_register_library_map(array(
     'MockedProjectAssignmentEventListener' => 'event/__tests__/ProjectAssignmentEventListenerTestCase.php',
     'ProjectAssignmentEventListener' => 'event/ProjectAssignmentEventListener.php',
     'ProjectAssignmentEventListenerTestCase' => 'event/__tests__/ProjectAssignmentEventListenerTestCase.php',
+    'SentryLogger' => 'sentrylogger/SentryLogger.php',
   ),
   'function' =>
   array(
