@@ -1,8 +1,5 @@
 <?php
 
-require_once 'Raven/Autoloader.php';
-Raven_Autoloader::register();
-
 /**
  * SentryLogger::setClient($client);
  * PhutilErrorHandler::setErrorListener(
