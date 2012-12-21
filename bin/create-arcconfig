@@ -35,7 +35,7 @@ echo "Creating default .arcconfig at '$arc_path'"
   "copyright_holder": "Disqus, Inc.",
   "immutable_history": false,
   "differential.field-selector": "DisqusDifferentialFieldSelector",
-  "lint_engine": "ComprehensiveLintEngine",
+  "lint_engine": "DisqusLintEngine",
   "lint.pep8.options": "--ignore=W391,W292,W293,E501,E225",
   "lint.jshint.prefix": "node_modules/jshint/bin",
   "lint.jshint.bin": "hint",
