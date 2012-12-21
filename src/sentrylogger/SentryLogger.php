@@ -11,9 +11,12 @@ final class SentryLogger {
   private static $client = null;
   private static $errorHandler = null;
 
-  public static function setClient($client) {
+  public static function setClient($client, $error_handler=null) {
     self::$client = $client;
-    self::$errorHandler = new Raven_ErrorHandler($client);
+    if (!$error_handler) {
+      $error_handler = new Raven_ErrorHandler($client);
+    }
+    self::$errorHandler = $error_handler;
   }
 
   public static function handleErrors($event, $value, $metadata) {
