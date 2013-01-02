@@ -36,7 +36,7 @@ echo "Creating default .arcconfig at '$arc_path'"
   "immutable_history": false,
   "differential.field-selector": "DisqusDifferentialFieldSelector",
   "lint_engine": "DisqusLintEngine",
-  "lint.pep8.options": "--ignore=W391,W292,W293,E501,E225",
+  "lint.flake8.options": "--ignore=W391,W292,W293,E501,E225,E121,E123,E124,E127,E128",
   "lint.jshint.prefix": "node_modules/jshint/bin",
   "lint.jshint.bin": "hint",
   "phutil_libraries": {
