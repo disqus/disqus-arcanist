@@ -52,7 +52,7 @@ final class DisqusNotificationHandler extends PhabricatorIRCHandler {
       $verb = DifferentialAction::getActionPastTenseVerb($data['action']);
 
       $actor_name = $handles[$actor_phid]->getName();
-      $message = "{$actor_name} {$verb} revision ".$this->getDiffMessage($data);
+      $message = "{$actor_name} {$verb} ".$this->getDiffMessage($data);
 
       $channels = $this->getConfig('notification.channels', array());
       foreach ($channels as $channel) {
