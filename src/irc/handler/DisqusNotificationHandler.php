@@ -18,7 +18,7 @@ final class DisqusNotificationHandler extends PhabricatorIRCHandler {
   }
 
   private function getDiffMessage($event_data) {
-    return 'D'.$event_data['revision_id'].' '.$event_data['revision_name'].' - '.
+    return 'D'.$event_data['revision_id'].' -  '.$event_data['revision_name'].' - '.
       PhabricatorEnv::getURI('/D'.$event_data['revision_id']);
   }
 
