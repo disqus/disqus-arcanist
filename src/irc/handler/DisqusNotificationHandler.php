@@ -6,20 +6,21 @@
 final class DisqusNotificationHandler extends PhabricatorIRCHandler {
 
   private $lastSeenChronoKey = 0;
+  private $next = 0;
 
-  private function careAbout($action) {
-    switch ($action) {
-      case DifferentialAction::ACTION_CREATE:
-      case DifferentialAction::ACTION_CLOSE:
-        return true;
+  private function careAbout($event_class, $event_text) {
+    switch ($event_class) {
+      case 'PhabricatorFeedStoryDifferential':
+        if (preg_match('/^.+? (created|closed) revision.*/', $event_text)) {
+          return true;
+        }
+      break;
       default:
         return false;
+      break;
     }
-  }
 
-  private function getDiffMessage($event_data) {
-    return 'D'.$event_data['revision_id'].' -  '.$event_data['revision_name'].' - '.
-      PhabricatorEnv::getURI('/D'.$event_data['revision_id']);
+    return false;
   }
 
   public function receiveMessage(PhabricatorIRCMessage $message) {
@@ -27,7 +28,9 @@ final class DisqusNotificationHandler extends PhabricatorIRCHandler {
   }
 
   public function runBackgroundTasks() {
-    if (!$this->lastSeenChronoKey) {
+    if (microtime(true) < $this->next) {
+      return;
+    } elseif ($this->next == 0) {
       // Since we only want to post notifications about new events, skip
       // everything that's happened in the past when we start up so we'll
       // only process real-time events.
@@ -43,19 +46,25 @@ final class DisqusNotificationHandler extends PhabricatorIRCHandler {
         }
       }
 
+      $this->next = microtime(true) + 30;
+
       return;
     }
+
+    $config_maxPages = $this->getConfig('notification.maxPages', 2);
+    $config_pageSize = $this->getConfig('notification.pageSize', 10);
 
     $lastSeenChronoKey = $this->lastSeenChronoKey;
     $chronoKeyCursor = 0;
 
     // Not efficient but works due to feed.query API
-    for ($maxPages = 10; $maxPages > 0; $maxPages--) {
+    for ($maxPages = $config_maxPages; $maxPages > 0; $maxPages--) {
       $stories = $this->getConduit()->callMethodSynchronous(
         'feed.query',
         array(
-          'limit'=>10,
-          'after'=>$chronoKeyCursor
+          'limit'=>$config_pageSize,
+          'after'=>$chronoKeyCursor,
+          'view'=>'text'
         ));
 
       foreach ($stories as $event) {
@@ -69,31 +78,18 @@ final class DisqusNotificationHandler extends PhabricatorIRCHandler {
           $chronoKeyCursor = $event['chronologicalKey'];
         }
 
-        switch ($event['class']) {
-          case 'PhabricatorFeedStoryDifferential':
-            break;
-          default:
-            continue 2;
-            break;
-        }
-
-        if (!$event['data'] || !$this->careAbout($event['data']['action'])) {
+        if (!$event['text'] || !$this->careAbout($event['class'], $event['text'])) {
           continue;
         }
 
-        $actor_phid = $event['data']['actor_phid'];
-        $phids = array($actor_phid);
-        $handles = id(new PhabricatorObjectHandleData($phids))->loadHandles();
-        $verb = DifferentialAction::getActionPastTenseVerb($event['data']['action']);
-
-        $actor_name = $handles[$actor_phid]->getName();
-        $message = "{$actor_name} {$verb} revision ".$this->getDiffMessage($event['data']);
-
         $channels = $this->getConfig('notification.channels', array());
         foreach ($channels as $channel) {
-          $this->write('PRIVMSG', "{$channel} :{$message}");
+          $this->write('PRIVMSG', "{$channel} :{$event['text']}");
         }
       }
     }
+
+    $this->next = microtime(true) + $this->getConfig('notification.sleep', 1);
   }
+
 }
