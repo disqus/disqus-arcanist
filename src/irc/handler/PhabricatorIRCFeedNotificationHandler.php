@@ -3,21 +3,71 @@
 /**
  * @group irc
  */
-final class DisqusNotificationHandler extends PhabricatorIRCHandler {
+final class PhabricatorIRCFeedNotificationHandler extends PhabricatorIRCHandler {
 
   private $lastSeenChronoKey = 0;
   private $next = 0;
 
   private function careAbout($event_class, $event_text) {
-    switch ($event_class) {
-      case 'PhabricatorFeedStoryDifferential':
-        if (preg_match('/^.+? (created|closed) revision.*/', $event_text)) {
-          return true;
-        }
-      break;
-      default:
+    if ($this->getConfig('notification.all')) {
+        return true;
+    }
+
+    $show = $this->getConfig('notification.types');
+
+    if ($show) {
+      $obj_type = str_replace('PhabricatorFeedStory', '', $event_class);
+      if (!in_array(strtolower($obj_type), $show)) {
         return false;
-      break;
+      }
+    }
+
+    $verbosity = $this->getConfig('notification.verbosity', 0);
+
+    $verbs = array();
+
+    switch ($verbosity) {
+        case 2:
+          $verbs[] = array(
+                        'commented',
+                        'added',
+                        'changed',
+                        'resigned',
+                        'explained',
+                        'modified',
+                        'attached',
+                        'edited',
+                        'joined',
+                        'left',
+                        'removed'
+                     );
+        case 1:
+          $verbs[] = array(
+                        'updated',
+                        'accepted',
+                        'requested',
+                        'planned',
+                        'claimed',
+                        'summarized',
+                        'commandeered',
+                        'assigned'
+                     );
+        case 0:
+          $verbs[] = array(
+                        'created',
+                        'closed',
+                        'raised',
+                        'committed',
+                        'reopened',
+                        'deleted'
+                     );
+        break;
+    }
+
+    $verbs = '/('.implode('|', array_mergev($verbs)).')/';
+
+    if (preg_match($verbs, $event_text)) {
+        return true;
     }
 
     return false;
@@ -68,11 +118,11 @@ final class DisqusNotificationHandler extends PhabricatorIRCHandler {
         ));
 
       foreach ($stories as $event) {
-        if ($event['chronologicalKey'] > $this->lastSeenChronoKey) {
-          $this->lastSeenChronoKey = $event['chronologicalKey'];
-        }
         if ($event['chronologicalKey'] == $lastSeenChronoKey) {
           return;
+        }
+        if ($event['chronologicalKey'] > $this->lastSeenChronoKey) {
+          $this->lastSeenChronoKey = $event['chronologicalKey'];
         }
         if (!$chronoKeyCursor || $event['chronologicalKey'] < $chronoKeyCursor) {
           $chronoKeyCursor = $event['chronologicalKey'];
