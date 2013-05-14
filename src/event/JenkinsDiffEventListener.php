@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2012 Disqus, Inc.
+ * Copyright 2013 Disqus, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
  * limitations under the License.
  */
 
-// This gets installed by adding the following to the config:
-// 'events.listeners' => array(
-//   'JenkinsDiffEventListener',
-// ),
-
 class JenkinsDiffEventListener extends PhutilEventListener {
 
   public function register() {
@@ -33,8 +28,15 @@ class JenkinsDiffEventListener extends PhutilEventListener {
     /* Need to send a get request to jenkins to trigger the job. We pass the
      * diff id to jenkins via its api.
      */
+    $workflow = $event->getValue('workflow');
+    $jenkins_uri = $workflow->getConfigFromWhateverSourceAvailiable('jenkins.uri');
+    $jenkins_job = $workflow->getConfigFromWhateverSourceAvailiable('jenkins.job');
 
-    $url = "http://ci.local.disqus.net/job/disqus-phabricator/buildWithParameters?DIFF_ID=".$diff_id;
+    if (!$jenkins_uri || !$jenkins_job) {
+      return;
+    }
+
+    $url = $jenkins_uri."/job/".$jenkins_job."/buildWithParameters?DIFF_ID=".$diff_id;
 
     file_get_contents($url);
   }
