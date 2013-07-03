@@ -130,7 +130,14 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
 
     $future = new ExecFuture("%C", $runtests_command);
     $future->setCWD($project_root);
-    $future->resolvex();
+    try {
+      $future->resolvex();
+    } catch(CommandException $exc) {
+      if ($exc->getError() > 1) {
+        // 'nose' returns 1 when tests are failing/broken.
+        throw $exc;
+      }
+    }
 
     if (!$js && $this->getEnableCoverage() !== false) {
       $pythonPaths = $this->getPythonPaths();
