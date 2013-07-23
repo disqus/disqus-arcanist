@@ -112,7 +112,9 @@ final class DjangoUnitTestEngine extends ArcanistBaseUnitTestEngine {
                 // when there are errors
                 $result->setUserData("");
 
-                if($testResult =="ok") {
+                $passWords = array("ok", "passed");
+
+                if(in_array($testResult, $passWords)) {
                     $result->setResult(
                         ArcanistUnitTestResult::RESULT_PASS);
                 } else if($testResult == "FAIL") {
