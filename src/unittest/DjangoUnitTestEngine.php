@@ -59,7 +59,7 @@ final class DjangoUnitTestEngine extends ArcanistBaseUnitTestEngine {
         return $pythonPaths;
     }
 
-    private function runDjangoTestSuite($managepyPath) {
+    private function runDjangoTestSuite($project_root, $managepyPath) {
         if($this->getEnableCoverage()) {
             // cleans coverage results from any previous runs
             exec("coverage erase");
@@ -75,115 +75,122 @@ final class DjangoUnitTestEngine extends ArcanistBaseUnitTestEngine {
         // specified by the .arcconfig
         $appNames = $this->getAppNames();
         $additionalArgs = $this->getAdditionalManageArgs();
-        exec("$cmd $managepyPath test -v2 $appNames $additionalArgs 2>&1",
-             $testLines, $testExitCode);
+        $exec = "$cmd $managepyPath test -v2 $appNames $additionalArgs 2>&1";
+
+        $future = new ExecFuture("%C", $exec);
+        $future->setCWD($project_root);
+        try {
+            $future->resolvex();
+            $testExitCode = 0;
+        } catch(CommandException $exc) {
+            if ($exc->getError() > 1) {
+              // 'nose' returns 1 when tests are failing/broken.
+              throw $exc;
+            }
+            $testExitCode = $exc->getError();
+        }
+
+        list($stdout, $stderr) = $future->read();
+        $stdout = trim($stdout);
+        $stderr = trim($stderr);
+        $testLines = explode("\n" , $stdout);
 
         $testResults = array();
+
         $testResults["testLines"] = $testLines;
         $testResults["testExitCode"] = $testExitCode;
-        $testResults["results"] = $this->parseTestResults($testLines);
+
+        $xunit_path = $project_root . '/test_results/nosetests.xml';
+        $testResults["results"] = array();
+        $testResults["results"] = $this->parseXunitFile($xunit_path, $testResults["results"]);
 
         return $testResults;
     }
 
-    private function parseTestResults($testLines) {
-        // store the ArcanistUnitTestResults for this project
-        $results = array();
+    private function parseXunitFile($xunit_path, $results) {
+        $xunit_dom = new DOMDocument();
+        $xunit_dom->loadXML(Filesystem::readFile($xunit_path));
 
-        // buffer to help with regex finds, as we use multiline patterns
-        $strbuf = "";
-        foreach ($testLines as $testLine) {
-            $strbuf .= $testLine."\n";
+        $testcases = $xunit_dom->getElementsByTagName("testcase");
+        foreach ($testcases as $testcase) {
+            $classname = $testcase->getAttribute("classname");
+            $name = $testcase->getAttribute("name");
+            $time = $testcase->getAttribute("time");
 
-            // pattern for a test run:
-            // test_blah blah (some.package.SimpleTest) blahblah ... ok
-            while(preg_match("/(test_.*? \(.*?\)).*? \.\.\. (.*)\n/s",
-                             $strbuf,
-                             $testStatusMatches,
-                             PREG_OFFSET_CAPTURE)) {
-                $result = new ArcanistUnitTestResult();
+            $status = ArcanistUnitTestResult::RESULT_PASS;
+            $user_data = "";
 
-                // name of the test
-                $testName = $testStatusMatches[1][0];
-                // result (e.g. "ok", "FAIL")
-                $testResult = $testStatusMatches[2][0];
-                $result->setName($testName);
-                // set to default empty, this is the details  displayed
-                // when there are errors
-                $result->setUserData("");
-
-                $passWords = array("ok", "passed");
-
-                if(in_array($testResult, $passWords)) {
-                    $result->setResult(
-                        ArcanistUnitTestResult::RESULT_PASS);
-                } else if($testResult == "FAIL") {
-                    $result->setResult(
-                        ArcanistUnitTestResult::RESULT_FAIL);
-                } else if($testResult == "ERROR") {
-                    $result->setResult(
-                        ArcanistUnitTestResult::RESULT_FAIL);
-                } else if(strpos($testResult, "skipped") == 0) {
-                    $result->setResult(
-                        ArcanistUnitTestResult::RESULT_SKIP);
-                    // sets the skip reason as the UserData (displayed on
-                    // arc unit test results)
-                    $result->setUserData(substr($testResult, 8));
-                } else {
-                    // if we don't recognize the test result, default to
-                    // RESULT_UNSOUND
-                    $result->setResult(
-                        ArcanistUnitTestResult::RESULT_UNSOUND);
+            // A skipped test is a test which was ignored using framework
+            // mechanizms (e.g. @skip decorator)
+            $skipped = $testcase->getElementsByTagName("skipped");
+            if ($skipped->length > 0) {
+                $status = ArcanistUnitTestResult::RESULT_SKIP;
+                $messages = array();
+                for ($ii = 0; $ii < $skipped->length; $ii++) {
+                    $messages[] = trim($skipped->item($ii)->nodeValue, " \n");
                 }
 
-                // add to dict of UnitTestResults, keyed on name
-                $results[$testName] = $result;
-
-                // flush strbuf up to the end of the regex match
-                $end = $testStatusMatches[0][1] +
-                       strlen($testStatusMatches[0][0]);
-                $strbuf = substr($strbuf, $end);
+                $user_data .= implode("\n", $messages);
             }
 
-            // pattern for the error/traceback of a failed test:
-            // ===...
-            // FAIL: test_blah blah
-            // ---...
-            // Traceback lines
-            // more tracebacklines
-            // (empty line, so "\n\n")
-            while(preg_match(
-                    "/".DLINEBREAK."\n(FAIL|ERROR): (.*)\n".LINEBREAK."\n(.*?)\n\n/s",
-                    $strbuf,
-                    $failMatches,
-                    PREG_OFFSET_CAPTURE)) {
-                // name of the test
-                $testName = $failMatches[2][0];
-                // error/traceback string
-                $errorStr = $failMatches[3][0];
-
-                // only set UserData on the ArcanistUnitTestResult if it
-                // exists
-                if(array_key_exists($testName, $results)) {
-                    $results[$testName]->setUserData($errorStr);
+            // Failure is a test which the code has explicitly failed by using
+            // the mechanizms for that purpose. e.g., via an assertEquals
+            $failures = $testcase->getElementsByTagName("failure");
+            if ($failures->length > 0) {
+                $status = ArcanistUnitTestResult::RESULT_FAIL;
+                $messages = array();
+                for ($ii = 0; $ii < $failures->length; $ii++) {
+                    $messages[] = trim($failures->item($ii)->nodeValue, " \n");
                 }
 
-                // flush strbuf up to the end of the regex match
-                $end = $failMatches[0][1] +
-                       strlen($failMatches[0][0]);
-                $strbuf = substr($strbuf, $end);
+                $user_data .= implode("\n", $messages)."\n";
             }
+
+            // An errored test is one that had an unanticipated problem. e.g., an
+            // unchecked throwable, or a problem with an implementation of the
+            // test.
+            $errors = $testcase->getElementsByTagName("error");
+            if ($errors->length > 0) {
+                $status = ArcanistUnitTestResult::RESULT_BROKEN;
+                $messages = array();
+                for ($ii = 0; $ii < $errors->length; $ii++) {
+                    $messages[] = trim($errors->item($ii)->nodeValue, " \n");
+                }
+
+                $user_data .= implode("\n", $messages)."\n";
+            }
+
+            $testName = $classname.".".$name;
+            $result = isset($results[$testName]) ? $results[$testName] : new ArcanistUnitTestResult();
+            $result = new ArcanistUnitTestResult();
+
+            $result->setName($testName);
+            $result->setResult($status);
+            $result->setDuration($time);
+            $result->setUserData($user_data);
+            $results[$testName] = $result;
         }
 
         return $results;
     }
-    private function processCoverageResults($results) {
+
+    private function processCoverageResults($project_root, $results) {
         // generate annotated source files to find out which lines have
         // coverage
         // limit files to only those "*.py" files in getPaths()
         $pythonPaths = $this->getPythonPaths();
         $pythonPathsStr = join(",", $this->getPythonPaths());
-        exec("coverage annotate --include=$pythonPathsStr");
+
+        $future = new ExecFuture("coverage annotate --include=$pythonPathsStr");
+        $future->setCWD($project_root);
+        try {
+            $future->resolvex();
+        } catch(CommandException $exc) {
+            if ($exc->getError() > 1) {
+              // 'nose' returns 1 when tests are failing/broken.
+              throw $exc;
+            }
+        }
 
         // store all the coverage results for this project
         $coverageArray = array();
@@ -239,6 +246,8 @@ final class DjangoUnitTestEngine extends ArcanistBaseUnitTestEngine {
     }
 
     public function run() {
+        $working_copy = $this->getWorkingCopy();
+        $project_root = $working_copy->getProjectRoot();
 
         $this->setEnableCoverage(true);
 
@@ -260,7 +269,7 @@ final class DjangoUnitTestEngine extends ArcanistBaseUnitTestEngine {
         foreach ($managepyDirs as $managepyDir) {
             $managepyPath = $managepyDir."/manage.py";
 
-            $testResults = $this->runDjangoTestSuite($managepyPath);
+            $testResults = $this->runDjangoTestSuite($project_root, $managepyPath);
             $testLines = $testResults["testLines"];
             $testExitCode = $testResults["testExitCode"];
             $results = $testResults["results"];
@@ -285,7 +294,7 @@ final class DjangoUnitTestEngine extends ArcanistBaseUnitTestEngine {
             }
 
             if($this->getEnableCoverage()) {
-                $this->processCoverageResults($results);
+                $this->processCoverageResults($project_root, $results);
             }
 
             $resultsArray = array_merge($resultsArray, $results);
