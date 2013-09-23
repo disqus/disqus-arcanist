@@ -37,7 +37,7 @@ class DesignDecisionEventListener extends PhutilEventListener {
     // discover DDN field from transactions
     $ddn = null;
     foreach ($event->getValue('transactions') as $transaction) {
-      if ($transaction->getTransactionType() != ManiphestTransactionType::TYPE_AUXILIARY) {
+      if ($transaction->getTransactionType() != PhabricatorTransactions::TYPE_CUSTOMFIELD) {
           continue;
       }
       $key = $transaction->getMetadataValue('aux:key');
