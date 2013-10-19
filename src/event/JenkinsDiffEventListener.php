@@ -29,8 +29,8 @@ class JenkinsDiffEventListener extends PhutilEventListener {
      * diff id to jenkins via its api.
      */
     $workflow = $event->getValue('workflow');
-    $jenkins_uri = $workflow->getConfigFromWhateverSourceAvailiable('jenkins.uri');
-    $jenkins_job = $workflow->getConfigFromWhateverSourceAvailiable('jenkins.job');
+    $jenkins_uri = $workflow->getConfigFromAnySource('jenkins.uri');
+    $jenkins_job = $workflow->getConfigFromAnySource('jenkins.job');
 
     if (!$jenkins_uri || !$jenkins_job) {
       return;
