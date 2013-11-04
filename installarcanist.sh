@@ -51,7 +51,7 @@ ln -fs "$PHP_DIR/libdisqus/bin/update-arcanist" "$BIN_DIR/update-arcanist"
 chmod +x "$BIN_DIR/update-arcanist"
 
 ## arc
-echo "php $PHP_DIR/arcanist/scripts/arcanist.php  --load-phutil-library='$PHP_DIR/libdisqus/src' \"\$@\"" > "$BIN_DIR/arc"
+echo "php $PHP_DIR/arcanist/scripts/arcanist.php \"\$@\"" > "$BIN_DIR/arc"
 chmod +x "$BIN_DIR/arc"
 
 echo "Done!"
