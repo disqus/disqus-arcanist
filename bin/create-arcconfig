@@ -39,9 +39,7 @@ echo "Creating default .arcconfig at '$arc_path'"
   "lint.flake8.options": "--ignore=W391,W292,W293,E501,E225,E121,E123,E124,E127,E128",
   "lint.jshint.prefix": "node_modules/jshint/bin",
   "lint.jshint.bin": "hint",
-  "phutil_libraries": {
-      "disqus": "$libdisqus_path"
-  }
+  "load": ["$libdisqus_path"]
 }
 EOT
 } > $arc_path
