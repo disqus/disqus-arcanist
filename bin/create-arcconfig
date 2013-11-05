@@ -33,12 +33,15 @@ echo "Creating default .arcconfig at '$arc_path'"
   "conduit_uri" : "http://phabricator.local.disqus.net/",
   "arcanist_configuration": "DisqusConfiguration",
   "copyright_holder": "Disqus, Inc.",
-  "immutable_history": false,
+  "history.immutable": false,
   "differential.field-selector": "DisqusDifferentialFieldSelector",
-  "lint_engine": "DisqusLintEngine",
+  "lint.engine": "DisqusLintEngine",
   "lint.flake8.options": "--ignore=W391,W292,W293,E501,E225,E121,E123,E124,E127,E128",
   "lint.jshint.prefix": "node_modules/jshint/bin",
   "lint.jshint.bin": "hint",
+  "events.listeners": ["JenkinsDiffEventListener"],
+  "jenkins.uri": "http:\/\/ci.local.disqus.net",
+  "jenkins.job": "services-phabricator",
   "phutil_libraries": {
       "disqus": "$libdisqus_path"
   }
