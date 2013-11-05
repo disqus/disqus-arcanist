@@ -42,9 +42,7 @@ echo "Creating default .arcconfig at '$arc_path'"
   "events.listeners": ["JenkinsDiffEventListener"],
   "jenkins.uri": "http:\/\/ci.local.disqus.net",
   "jenkins.job": "services-phabricator",
-  "phutil_libraries": {
-      "disqus": "$libdisqus_path"
-  }
+  "load": ["$libdisqus_path"]
 }
 EOT
 } > $arc_path
