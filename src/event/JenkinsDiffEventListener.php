@@ -36,7 +36,7 @@ class JenkinsDiffEventListener extends PhutilEventListener {
       return;
     }
 
-    $url = $jenkins_uri."/job/".$jenkins_job."/buildWithParameters?DIFF_ID=".$diff_id;
+    $url = $jenkins_uri."/job/".$jenkins_job."/buildWithParameters?token=arcanist&DIFF_ID=".$diff_id;
 
     file_get_contents($url);
   }
