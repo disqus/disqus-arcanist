@@ -1,0 +1,5 @@
+{
+  "project_id": "libdisqus",
+  "conduit_uri" : "http://phabricator.local.disqus.net/",
+  "history.immutable": false
+}
