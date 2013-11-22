@@ -140,7 +140,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
         // arguments that are used in the "formatter string" so slice the
         // arguments array to prevent that in case people simply skip extra
         // arguments.
-        $num_args_used = preg_match_all('/[^%]%s/', $runtests_command);
+        $num_args_used = preg_match_all('/[^%]%s/', $runtests_command, $matches);
         $args = array_slice(
             array($runtests_command, $xunit_path, $coverage_path, implode(',', $paths)),
             0,
