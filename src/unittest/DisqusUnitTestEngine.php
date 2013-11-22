@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2011 Disqus, Inc.
+ * Copyright 2013 Disqus, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,50 +17,53 @@
  */
 
 /**
- * Very basic unit test engine which runs tests using Nose.
+ * A unit test engine which runs tests using configurable commands and assuming
+ * XUnit output.
  *
  * Requires the following packages:
- *    - nose-quickunit
- *    - nose >= 1.2
  *    - piplint
  *
- * Makes the assumption that you have a 'runtests.py' file which
- * is your designated nose test runner.
+ * Available configuration options are:
+ *  - unit.disqus.python
+ *  - unit.disqus.python+coverage
+ *  - unit.disqus.javascript
+ *  - unit.disqus.javascript+coverage
+ *  - unit.piplint.files
+ *
+ * All the options above, except for unit.piplint.files, are strings that are
+ * formatted using the "%s" pattern and receive the following arguments, in
+ * order: Xunit test result file path, Coverage result file path, changed paths
+ *
+ * Sample config:
+ *   "unit.disqus.python+coverage": "coverage run runtests.py --with-xunit --with-quickunit --xunit-file=%s && coverage xml -o %s --include=%s"
+ *
+ * unit.piplint.files is simply an array of pip requirement file paths
  *
  * @group unitrun
  */
 class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     public function run() {
-        $results = $this->runTests();
-
-        return $results;
-    }
-
-    private function runTests() {
         $this->checkRequirements();
 
         $working_copy = $this->getWorkingCopy();
         $project_root = $working_copy->getProjectRoot();
 
         list($xunit_path, $coverage_path) = $this->runTestSuite($project_root);
+        $python_results = $this->buildTestResults($xunit_path, $coverage_path);
 
-        $results = $this->buildTestResults($xunit_path, $coverage_path);
+        list($xunit_path, $coverage_path) = $this->runTestSuite($project_root, true);
+        $js_results = $this->buildTestResults($xunit_path, $coverage_path);
 
-        if (!$this->getJavascriptPaths()) {
-            return $results;
-        }
-
-        // If Javascript files have been touched, run Javascript tests
-        $xunit_path = $this->runJsTestSuite($project_root);
-        $js_results = $this->buildTestResults($xunit_path);
-        return array_merge($results, $js_results);
+        return array_merge($python_results, $js_results);
     }
 
     private function checkRequirements() {
         $working_copy = $this->getWorkingCopy();
         $project_root = $working_copy->getProjectRoot();
+        
+        $piplint_files = $this->getConfigurationManager()
+         ->getConfigFromAnySource('unit.piplint.files');
 
-        $piplint_files = $working_copy->getConfig('unit.piplint.files');
         if (empty($piplint_files)) {
             return;
         }
@@ -86,7 +89,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
         return $results;
     }
 
-    private function getJavascriptPaths(){
+    private function getJavaScriptPaths(){
         $results = array();
         foreach ($this->getPaths() as $path) {
             if (substr($path, -3) == '.js') {
@@ -103,32 +106,48 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
     }
 
     private function runTestSuite($project_root, $js=false) {
-        if (!file_exists($project_root.'/runtests.py')) {
-            return array();
+        $paths = $js ? $this->getJavaScriptPaths() : $this->getPythonPaths();
+        if (empty($paths)) {
+            return array(null, null);
         }
-        $xunit_filename = $js ? 'hiro' : 'nosetests';
-        $xunit_path = $project_root.'/test_results/'.$xunit_filename.'.xml';
-        $coverage_path = $project_root.'/test_results/coverage.xml';
+        
+        $config_manager = $this->getConfigurationManager();
+
+        $type = $js ? 'javascript' : 'python';
+        $xunit_path = $project_root.'/test_results/'.$type.'_tests.xml';
+        $coverage_path = $project_root.'/test_results/'.$type.'_coverage.xml';
 
         // Remove existing file so we cannot report old results
         $this->unlink($xunit_path);
         $this->unlink($coverage_path);
 
-        $runtests_command = csprintf('runtests.py --with-xunit --xunit-file=%s', $xunit_path);
-        $exec = 'python';
-
-        if ($js) {
-            $runtests_command = $runtests_command.' --js';
-        } else {
-            $runtests_command = $runtests_command.' --with-quickunit';
-            if ($this->getEnableCoverage() !== false) {
-                $exec = 'coverage run';
-            }
+        $key_name = 'unit.disqus.'.$type;
+        $key_name_with_coverage = $key_name.'+coverage';
+        
+        $runtests_command = null;
+        if ($this->getEnableCoverage()) {
+            $runtests_command = $config_manager
+              ->getConfigFromAnySource($key_name_with_coverage);
+        }
+        
+        // Config may not provide something with coverage
+        if (!$runtests_command) {
+            $coverage_path = null;
+            $runtests_command = $config_manager->getConfigFromAnySource($key_name);
         }
 
-        $runtests_command = $exec.' '.$runtests_command;
-
-        $future = new ExecFuture("%C", $runtests_command);
+        // csprintf, which is used by ExecFuture, complains when you pass more
+        // arguments that are used in the "formatter string" so slice the
+        // arguments array to prevent that in case people simply skip extra
+        // arguments.
+        $num_args_used = preg_match_all('/[^%]%s/', $runtests_command);
+        $args = array_slice(
+            array($runtests_command, $xunit_path, $coverage_path, implode(',', $paths)),
+            0,
+            $num_args_used + 1
+        );
+        $exec_future_reflection = new ReflectionClass('ExecFuture');
+        $future = $exec_future_reflection->newInstanceArgs($args);
         $future->setCWD($project_root);
         try {
             $future->resolvex();
@@ -139,99 +158,22 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
             }
         }
 
-        if (!$js && $this->getEnableCoverage() !== false) {
-            $pythonPaths = $this->getPythonPaths();
-            // If we run coverage with only non-python files it will error
-            if (!empty($pythonPaths)) {
-                try {
-                    $future = new ExecFuture("%C", csprintf('coverage xml -o %s --include=%s', $coverage_path, implode(',', $pythonPaths)));
-                    $future->setCWD($project_root);
-                    $future->resolvex();
-                } catch (Exception $ex) {
-                    // we dont care about this exception
-                }
-            }
-        }
-
         return array($xunit_path, $coverage_path);
     }
 
-    private function runJsTestSuite($project_root) {
-        list($xunit_path,) = $this->runTestSuite($project_root, true);
-        return $xunit_path;
-    }
-
     private function buildTestResults($xunit_path, $coverage_path=null) {
-        if ($this->getEnableCoverage() !== false && file_exists($coverage_path)) {
-            $coverage_report = $this->readCoverage($coverage_path);
-        } else {
-            $coverage_report = null;
+        if (!file_exists($xunit_path)) {
+            return array();
         }
 
-        $xunit_dom = new DOMDocument();
-        $xunit_dom->loadXML(Filesystem::readFile($xunit_path));
-
-        $results = array();
-        $testcases = $xunit_dom->getElementsByTagName("testcase");
-        foreach ($testcases as $testcase) {
-            $classname = $testcase->getAttribute("classname");
-            $name = $testcase->getAttribute("name");
-            $time = $testcase->getAttribute("time");
-
-            $status = ArcanistUnitTestResult::RESULT_PASS;
-            $user_data = "";
-
-            // A skipped test is a test which was ignored using framework
-            // mechanizms (e.g. @skip decorator)
-            $skipped = $testcase->getElementsByTagName("skipped");
-            if ($skipped->length > 0) {
-                $status = ArcanistUnitTestResult::RESULT_SKIP;
-                $messages = array();
-                for ($ii = 0; $ii < $skipped->length; $ii++) {
-                    $messages[] = trim($skipped->item($ii)->nodeValue, " \n");
-                }
-
-                $user_data .= implode("\n", $messages);
-            }
-
-            // Failure is a test which the code has explicitly failed by using
-            // the mechanizms for that purpose. e.g., via an assertEquals
-            $failures = $testcase->getElementsByTagName("failure");
-            if ($failures->length > 0) {
-                $status = ArcanistUnitTestResult::RESULT_FAIL;
-                $messages = array();
-                for ($ii = 0; $ii < $failures->length; $ii++) {
-                    $messages[] = trim($failures->item($ii)->nodeValue, " \n");
-                }
-
-                $user_data .= implode("\n", $messages)."\n";
-            }
-
-            // An errored test is one that had an unanticipated problem. e.g., an
-            // unchecked throwable, or a problem with an implementation of the
-            // test.
-            $errors = $testcase->getElementsByTagName("error");
-            if ($errors->length > 0) {
-                $status = ArcanistUnitTestResult::RESULT_BROKEN;
-                $messages = array();
-                for ($ii = 0; $ii < $errors->length; $ii++) {
-                    $messages[] = trim($errors->item($ii)->nodeValue, " \n");
-                }
-
-                $user_data .= implode("\n", $messages)."\n";
-            }
-
-            $result = new ArcanistUnitTestResult();
-            $result->setName($classname.".".$name);
-            $result->setResult($status);
-            $result->setDuration($time);
-            $result->setUserData($user_data);
-            // this is technically incorrect, but since phabricator aggregates it we dont care
-            if ($coverage_report !== null) {
+        $this->parser = new ArcanistXUnitTestResultParser();
+        $results = $this->parser->parseTestResults(Filesystem::readFile($xunit_path));
+        
+        if (file_exists($coverage_path)) {
+            $coverage_report = $this->readCoverage($coverage_path);
+            foreach ($results as $result) {
                 $result->setCoverage($coverage_report);
             }
-
-            $results[] = $result;
         }
 
         return $results;
