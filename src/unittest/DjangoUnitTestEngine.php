@@ -38,7 +38,7 @@ final class DjangoUnitTestEngine extends PythonBaseUnitTestEngine {
     }
 
     function getPythonTestCommand($testFile) {
-        if($this->getEnableCoverage()) {
+        if($this->getEnableCoverage() !== false) {
             // cleans coverage results from any previous runs
             exec("coverage erase");
             $cmd = "coverage run --source='.'";

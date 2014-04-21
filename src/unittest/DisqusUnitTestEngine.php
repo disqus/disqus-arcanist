@@ -125,7 +125,7 @@ class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
         $key_name_with_coverage = $key_name.'+coverage';
         
         $runtests_command = null;
-        if ($this->getEnableCoverage()) {
+        if ($this->getEnableCoverage() !== false) {
             $runtests_command = $config_manager
               ->getConfigFromAnySource($key_name_with_coverage);
         }

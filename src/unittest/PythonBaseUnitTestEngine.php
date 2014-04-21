@@ -31,7 +31,7 @@ abstract class PythonBaseUnitTestEngine extends ArcanistBaseUnitTestEngine {
     }
 
     public function getPythonTestCommand($testFile) {
-        if($this->getEnableCoverage()) {
+        if($this->getEnableCoverage() !== false) {
             // cleans coverage results from any previous runs
             exec("coverage erase");
             $cmd = "coverage run --source='.'";
@@ -257,7 +257,7 @@ abstract class PythonBaseUnitTestEngine extends ArcanistBaseUnitTestEngine {
                 continue;
             }
 
-            if($this->getEnableCoverage()) {
+            if($this->getEnableCoverage() !== false) {
                 $this->processCoverageResults($project_root, $results);
             }
 
