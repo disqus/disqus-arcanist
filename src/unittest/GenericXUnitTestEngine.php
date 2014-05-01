@@ -1,21 +1,5 @@
 <?php
 
-/*
- * Copyright 2013 Disqus, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 /**
  * Very basic unit test engine which runs tests using a script from
  * configuration and expects an XUnit compatible result.
@@ -32,10 +16,12 @@ class GenericXUnitTestEngine extends ArcanistBaseUnitTestEngine {
     private function runTests() {
         $root = $this->getWorkingCopy()->getProjectRoot();
         $script = $this->getConfiguredScript();
-        $path = $this->getConfiguredTestResultPath().'/arcanist.xml';
+        $path = $this->getConfiguredTestResultPath();
 
-        // Remove existing file so we cannot report old results
-        $this->unlink($path);
+        foreach (glob($path."/*.xml") as $filename) {
+            // Remove existing files so we cannot report old results
+            $this->unlink($filename);
+        }
 
         $future = new ExecFuture('%C %s', $script, $path);
         $future->setCWD($root);
@@ -51,9 +37,15 @@ class GenericXUnitTestEngine extends ArcanistBaseUnitTestEngine {
     }
     
     public function parseTestResults($path) {
-        $this->parser = new ArcanistXUnitTestResultParser();
-        return  $this->parser->parseTestResults(
-            Filesystem::readFile($path));
+        $results = array();
+        
+        foreach (glob($path."/*.xml") as $filename) {
+            $parser = new ArcanistXUnitTestResultParser();
+            $results[] = $parser->parseTestResults(
+                Filesystem::readFile($filename));
+        }
+        
+        return array_mergev($results);
     }
 
     private function unlink($filepath) {
