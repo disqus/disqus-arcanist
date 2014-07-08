@@ -13,24 +13,28 @@ abstract class PythonBaseUnitTestEngine extends ArcanistBaseUnitTestEngine {
     ////////////////////////////////////////////////////////////////////////////
     // public
 
-    // allow users to specify any additional args to put onto the end of exec
+    public function getConfig($key, $default){
+        return $this->getConfigurationManager()->getConfigFromAnySource(
+            $key,
+            $default
+        );
+    }
+
     public function getAdditionalTestArgs() {
-        $working_copy = $this->getWorkingCopy();
-        return $working_copy->getConfig(
+        return $this->getConfig(
             "unit.engine.setup_py_args",
             "test"
         );
     }
 
     public function getPythonTestFileName() {
-        $working_copy = $this->getWorkingCopy();
-        return $working_copy->getConfig(
+        return $this->getConfig(
             "unit.engine.test_file_path",
             "setup.py"
         );
     }
 
-    public function getPythonTestCommand($testFile) {
+    public function getPythonCommand() {
         if($this->getEnableCoverage() !== false) {
             // cleans coverage results from any previous runs
             exec("coverage erase");
@@ -39,9 +43,14 @@ abstract class PythonBaseUnitTestEngine extends ArcanistBaseUnitTestEngine {
             $cmd = "python";
         }
 
+        return $cmd;
+    }
+
+    public function getPythonTestCommand($testFile) {
         $additionalArgs = $this->getAdditionalTestArgs();
-        $exec = "$cmd ./$testFile $additionalArgs 2>&1";
-        return $exec;
+        $cmd = $this->getPythonCommand();
+
+        return "$cmd ./$testFile $additionalArgs 2>&1";
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -214,7 +223,7 @@ abstract class PythonBaseUnitTestEngine extends ArcanistBaseUnitTestEngine {
         $working_copy = $this->getWorkingCopy();
         $project_root = $working_copy->getProjectRoot();
 
-        $this->setEnableCoverage($working_copy->getConfig("unit.coverage", true));
+        $this->setEnableCoverage($this->getConfig("unit.coverage", true));
 
         // run everything relative to project root, so that our paths match up
         // with $this->getPaths()
