@@ -41,7 +41,7 @@
  *
  * @group unitrun
  */
-class DisqusUnitTestEngine extends ArcanistBaseUnitTestEngine {
+class DisqusUnitTestEngine extends ArcanistUnitTestEngine {
     public function run() {
         $this->checkRequirements();
 
