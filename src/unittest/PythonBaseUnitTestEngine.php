@@ -8,7 +8,7 @@ const LINEBREAK =
 
 // Taken nearly wholesale from https://github.com/boboli/arcanist-django
 
-abstract class PythonBaseUnitTestEngine extends ArcanistBaseUnitTestEngine {
+abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
 
     ////////////////////////////////////////////////////////////////////////////
     // public

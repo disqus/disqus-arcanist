@@ -6,7 +6,7 @@
  *
  * @group unit
  */
-class GenericXUnitTestEngine extends ArcanistBaseUnitTestEngine {
+class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
     public function run() {
         $results = $this->runTests();
 
