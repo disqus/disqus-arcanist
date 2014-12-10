@@ -23,6 +23,9 @@ class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
             $this->unlink($filename);
         }
 
+        // Provide changed paths to process
+        putenv("ARCANIST_DIFF_PATHS=".implode(PATH_SEPARATOR, $this->getPaths()));
+
         $future = new ExecFuture('%C %s', $script, $path);
         $future->setCWD($root);
         try {
