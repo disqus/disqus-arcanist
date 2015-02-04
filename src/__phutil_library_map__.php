@@ -9,6 +9,7 @@
 phutil_register_library_map(array(
   '__library_version__' => 2,
   'class' => array(
+    'ArcanistIsortLinter' => 'lint/linter/ArcanistIsortLinter.php',
     'CoverageFieldSpecification' => 'diff/CoverageFieldSpecification.php',
     'DesignDecisionEventListener' => 'event/DesignDecisionEventListener.php',
     'DisqusConfiguration' => 'configuration/DisqusConfiguration.php',
@@ -25,6 +26,7 @@ phutil_register_library_map(array(
   ),
   'function' => array(),
   'xmap' => array(
+    'ArcanistIsortLinter' => 'ArcanistExternalLinter',
     'CoverageFieldSpecification' => 'DifferentialFieldSpecification',
     'DesignDecisionEventListener' => 'PhutilEventListener',
     'DisqusConfiguration' => 'ArcanistConfiguration',
