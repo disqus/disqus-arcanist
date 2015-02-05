@@ -66,51 +66,72 @@ final class ArcanistIsortLinter extends ArcanistExternalLinter {
   }
 
   protected function parseLinterOutput($path, $err, $stdout, $stderr) {
+
     $messages = array();
-    $matches = split("\n", $stdout, 2);
+
+    if (strlen($stdout) == 0) {
+      return $messages;
+    }
+
+    $matches = explode("\n", $stdout, 2);
+
+    if (count($matches) < 2 ) {
+      return $messages;
+    }
 
     $description = $matches[0];
     $diff = $matches[1];
+
+    if (strlen($diff) == 0) {
+      return $messages;
+    }
 
     $parser = new ArcanistDiffParser();
     $changes = $parser->parseDiff($diff);
 
     foreach ($changes as $change) {
       foreach ($change->getHunks() as $hunk) {
-        $oldText = array();
-        $newText = array();
 
-        $replacementText = "";
-        $originalText = "";
+        $repl = array();
+        $orig = array();
 
         $lines = phutil_split_lines($hunk->getCorpus(), false);
         foreach ($lines as $line) {
           $char = strlen($line) ? $line[0] : '~';
-          $rest = "\n" . strlen($line) == 1 ? '' : substr($line, 1);
+          $rest = strlen($line) == 1 ? '' : substr($line, 1);
 
           switch ($char) {
             case '-':
-            $originalText .= $rest;
+            $orig[] = $rest;
             break;
 
             case '+':
-            $replacementText .= $rest;
+            $repl[] = $rest;
             break;
 
             case '~':
             break;
 
             case ' ':
-            $originalText .= $rest;
-            $replacementText .= $rest;
+            $orig[] = $rest;
+            $repl[] = $rest;
             break;
           }
         }
 
+        $replacementText = join("\n", $repl);
+        $originalText = join("\n", $orig);
+
+        // print("\n-orig------------------------\n");
+        // print($originalText);
+        // print("\n-repl------------------------\n");
+        // print($replacementText);
+        // print("\n-------------------------\n");
+
         $message = new ArcanistLintMessage();
         $message->setPath($path);
         $message->setLine($hunk->getOldOffset());
-        $message->setChar(0);
+        $message->setChar(1);
         $message->setCode('Improper imports');
         $message->setName('ISORT');
         // $message->setSeverity(ArcanistLintSeverity::SEVERITY_AUTOFIX);
