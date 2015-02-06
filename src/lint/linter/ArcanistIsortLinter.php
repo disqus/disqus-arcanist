@@ -32,7 +32,7 @@ final class ArcanistIsortLinter extends ArcanistExternalLinter {
   }
 
   protected function getMandatoryFlags() {
-    return ['--check-only',  '--diff'];
+    return array('--check-only',  '--diff');
   }
 
   public function shouldUseInterpreter() {
