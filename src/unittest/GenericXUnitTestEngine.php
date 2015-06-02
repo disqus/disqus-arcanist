@@ -18,7 +18,7 @@ class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
         $script = $this->getConfiguredScript();
         $path = $this->getConfiguredTestResultPath();
 
-        foreach (glob($path."/*.xml") as $filename) {
+        foreach (glob($root.DIRECTORY_SEPARATOR.$path."/*.xml") as $filename) {
             // Remove existing files so we cannot report old results
             $this->unlink($filename);
         }
@@ -36,18 +36,18 @@ class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
             }
         }
 
-        return $this->parseTestResults($path);
+        return $this->parseTestResults($root.DIRECTORY_SEPARATOR.$path);
     }
-    
+
     public function parseTestResults($path) {
         $results = array();
-        
+
         foreach (glob($path."/*.xml") as $filename) {
             $parser = new ArcanistXUnitTestResultParser();
             $results[] = $parser->parseTestResults(
                 Filesystem::readFile($filename));
         }
-        
+
         return array_mergev($results);
     }
 
@@ -81,7 +81,7 @@ class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
 
         return $config;
     }
-    
+
     private function getConfiguredTestResultPath() {
         $key = 'unit.genericxunit.result_path';
         $config = $this->getConfigurationManager()
