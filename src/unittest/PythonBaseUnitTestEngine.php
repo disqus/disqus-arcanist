@@ -8,6 +8,12 @@ const LINEBREAK =
 
 // Taken nearly wholesale from https://github.com/boboli/arcanist-django
 
+function microtime_float()
+{
+    list($usec, $sec) = explode(" ", microtime());
+    return ((float)$usec + (float)$sec);
+}
+
 abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
 
     ////////////////////////////////////////////////////////////////////////////
@@ -17,6 +23,14 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
         return $this->getConfigurationManager()->getConfigFromAnySource(
             $key,
             $default
+        );
+    }
+
+    public function getJXUnitPath()
+    {
+        return $this->getConfig(
+            "unit.engine.jxunit_Path",
+            "test_results/nosetest.xml"
         );
     }
 
@@ -149,13 +163,14 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
     }
 
     private function processCoverageResults($project_root, $results) {
+        $time_start = microtime_float();
+
         // generate annotated source files to find out which lines have
         // coverage
         // limit files to only those "*.py" files in getPaths()
-        $pythonPaths = $this->getPythonPaths();
-        $pythonPathsStr = join(",", $this->getPythonPaths());
+        $pythonPathsStr = join(" ", $this->getPythonPaths());
 
-        $future = new ExecFuture("coverage annotate --include=$pythonPathsStr");
+        $future = new ExecFuture("coverage annotate $pythonPathsStr");
         $future->setCWD($project_root);
         try {
             $future->resolvex();
@@ -169,10 +184,15 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
         // store all the coverage results for this project
         $coverageArray = array();
 
+        $lines_total = 0;
+        $lines_executable = 0;
+        $lines_not_executable = 0;
+        $lines_covered = 0;
+        $lines_not_covered = 0;
+
         // walk through project directory, searching for all ",cover" files
         // that coverage.py left behind
-        foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(
-                ".")) as $path) {
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(".")) as $path) {
             // paths are given as "./path/to/file.py,cover", so match the
             // "path/to/file.py" part
             if(!preg_match(":^\./(.*),cover$:", $path, $matches)) {
@@ -184,14 +204,32 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
             $coverageStr = "";
 
             foreach(file($path) as $coverLine) {
+                /*
+                    python coverage
+                    > executed
+                    ! missing(not executed)
+                    - excluded
+
+                    phab coverage
+                    N Not executable. This is a comment or whitespace which should be ignored when computing test coverage.
+                    C Covered. This line has test coverage.
+                    U Uncovered. This line is executable but has no test coverage.
+                    X Unreachable. If your coverage analysis can detect unreachable code, you can report it here.
+                */
+                $lines_total++;
                 switch($coverLine[0]) {
                     case '>':
+                        $lines_covered++;
+                        $lines_executable++;
                         $coverageStr .= 'C';
                         break;
                     case '!':
+                        $lines_not_covered++;
+                        $lines_executable++;
                         $coverageStr .= 'U';
                         break;
                     case ' ':
+                        $lines_not_executable++;
                         $coverageStr .= 'N';
                         break;
                     case '-':
@@ -212,11 +250,39 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
             }
         }
 
-        // have all ArcanistUnitTestResults for this project have coverage
-        // data for the whole project
-        foreach($results as $path => $result) {
-            $result->setCoverage($coverageArray);
+        $lines_percentage = bcdiv($lines_covered, $lines_executable, 4) * 100;
+
+        $time_end = microtime_float();
+        $time = $time_end - $time_start;
+
+        // python does not support per-test coverage results so just put all the coverage
+        // in a single 'coverage test'
+        $result = new ArcanistUnitTestResult();
+        $result->setNamespace('coverage');
+        $result->setName('coverage');
+        $result->setResult('pass');
+        $result->setDuration("$time");
+        $result->setUserData(
+            "coverage: $lines_percentage% executable: $lines_executable / covered: $lines_covered"
+        );
+        $result->setCoverage($coverageArray);
+
+        $results[] = $result;
+
+        return $results;
+    }
+
+    protected function removeDirectory($path)
+    {
+        if (in_array($path, ['', '.', '/', '..'])) {
+            throw new Exception('Dangerous delete');
         }
+        $files = glob('./' . $path . '/*');
+        foreach ($files as $file) {
+            is_dir($file) ? $this->removeDirectory($file) : unlink($file);
+        }
+        rmdir($path);
+        return;
     }
 
     public function run() {
@@ -236,7 +302,7 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
         $testFileDirs = $this->getTestFileDirs();
 
         // delete the previous test results
-        array_map('unlink', glob("test_results/*"));
+        $this->removeDirectory("test_results");
 
         // each test found is a django project to test
         foreach ($testFileDirs as $testFileDir) {
@@ -267,9 +333,8 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
             }
 
             if($this->getEnableCoverage() !== false) {
-                $this->processCoverageResults($project_root, $results);
+                $results = $this->processCoverageResults($project_root, $results);
             }
-
             $resultsArray = array_merge($resultsArray, $results);
         }
 

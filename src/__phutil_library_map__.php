@@ -9,6 +9,7 @@
 phutil_register_library_map(array(
   '__library_version__' => 2,
   'class' => array(
+    'ArcanistCodeLinter' => 'lint/linter/ArcanistEncodingLinter.php',
     'ArcanistIsortLinter' => 'lint/linter/ArcanistIsortLinter.php',
     'CoverageFieldSpecification' => 'diff/CoverageFieldSpecification.php',
     'DesignDecisionEventListener' => 'event/DesignDecisionEventListener.php',
@@ -20,12 +21,14 @@ phutil_register_library_map(array(
     'GenericXUnitTestEngine' => 'unittest/GenericXUnitTestEngine.php',
     'JenkinsDiffEventListener' => 'event/JenkinsDiffEventListener.php',
     'PhabricatorBotDocHandler' => 'bot/handler/PhabricatorBotDocHandler.php',
+    'PyTestUnitTestEngine' => 'unittest/PyTestUnitTestEngine.php',
     'PythonBaseUnitTestEngine' => 'unittest/PythonBaseUnitTestEngine.php',
     'SentryLogger' => 'sentrylogger/SentryLogger.php',
     'SetupPyUnitTestEngine' => 'unittest/SetupPyUnitTestEngine.php',
   ),
   'function' => array(),
   'xmap' => array(
+    'ArcanistCodeLinter' => 'ArcanistLinter',
     'ArcanistIsortLinter' => 'ArcanistExternalLinter',
     'CoverageFieldSpecification' => 'DifferentialFieldSpecification',
     'DesignDecisionEventListener' => 'PhutilEventListener',
@@ -37,6 +40,7 @@ phutil_register_library_map(array(
     'GenericXUnitTestEngine' => 'ArcanistUnitTestEngine',
     'JenkinsDiffEventListener' => 'PhutilEventListener',
     'PhabricatorBotDocHandler' => 'PhabricatorBotHandler',
+    'PyTestUnitTestEngine' => 'PythonBaseUnitTestEngine',
     'PythonBaseUnitTestEngine' => 'ArcanistUnitTestEngine',
     'SetupPyUnitTestEngine' => 'PythonBaseUnitTestEngine',
   ),

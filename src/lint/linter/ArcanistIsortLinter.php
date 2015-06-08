@@ -26,28 +26,21 @@ final class ArcanistIsortLinter extends ArcanistExternalLinter {
   public function getLinterConfigurationName() {
     return 'isort';
   }
-
-  protected function getDefaultFlags() {
-    return $this->getDeprecatedConfiguration('lint.isort.options', array());
-  }
-
+  
   protected function getMandatoryFlags() {
-    return array('--check-only',  '--diff');
+    return array('-m', 'isort.main', '--check-only',  '--diff', '--');
   }
 
   public function shouldUseInterpreter() {
-    return ($this->getDefaultBinary() !== 'isort');
+    return false;
   }
 
   public function getDefaultInterpreter() {
-    return 'python2.7';
+    return 'python';
   }
 
   public function getDefaultBinary() {
-    if (Filesystem::binaryExists('isort')) {
-      return 'isort';
-    }
-    return false;
+    return 'python';
   }
 
   public function getVersion() {
