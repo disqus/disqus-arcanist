@@ -166,8 +166,8 @@ class DisqusUnitTestEngine extends ArcanistUnitTestEngine {
             return array();
         }
 
-        $this->parser = new ArcanistXUnitTestResultParser();
-        $results = $this->parser->parseTestResults(Filesystem::readFile($xunit_path));
+        $parser = new ArcanistXUnitTestResultParser();
+        $results = $parser->parseTestResults(Filesystem::readFile($xunit_path));
         
         if (file_exists($coverage_path)) {
             $coverage_report = $this->readCoverage($coverage_path);
