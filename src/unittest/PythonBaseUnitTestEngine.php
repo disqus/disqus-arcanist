@@ -157,8 +157,8 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
 
     private function parseXunitFile($xunit_path, $results) {
 
-        $this->parser = new ArcanistXUnitTestResultParser();
-        return  $this->parser->parseTestResults(
+        $parser = new ArcanistXUnitTestResultParser();
+        return  $parser->parseTestResults(
             Filesystem::readFile($xunit_path));
     }
 
