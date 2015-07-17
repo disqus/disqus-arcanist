@@ -28,15 +28,25 @@ class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
 
         $future = new ExecFuture('%C %s', $script, $path);
         $future->setCWD($root);
+        $err = null;
         try {
             $future->resolvex();
         } catch(CommandException $exc) {
-            if ($exc->getError() != 0) {
-                throw $exc;
-            }
+            $err = $exc;
         }
 
-        return $this->parseTestResults($root.DIRECTORY_SEPARATOR.$path);
+        $results = $this->parseTestResults($root.DIRECTORY_SEPARATOR.$path);
+
+        if ($err) {
+            $result = new ArcanistUnitTestResult();
+            $result->setName('Unit Test Script');
+            $result->setResult(ArcanistUnitTestResult::RESULT_BROKEN);
+            $result->setUserData("ERROR: Command failed with code {$err->getError()}\nCOMMAND: `{$err->getCommand()}`");
+
+            $results[] = $result;
+        }
+
+        return $results;
     }
 
     public function parseTestResults($path) {
