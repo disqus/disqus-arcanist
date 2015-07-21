@@ -261,7 +261,7 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
         $result->setNamespace('coverage');
         $result->setName('coverage');
         $result->setResult('pass');
-        $result->setDuration("$time");
+        $result->setDuration($time);
         $result->setUserData(
             "coverage: $lines_percentage% executable: $lines_executable / covered: $lines_covered"
         );
