@@ -274,7 +274,7 @@ abstract class PythonBaseUnitTestEngine extends ArcanistUnitTestEngine {
 
     protected function removeDirectory($path)
     {
-        if (in_array($path, ['', '.', '/', '..'])) {
+        if (in_array($path, array('', '.', '/', '..'))) {
             throw new Exception('Dangerous delete');
         }
         $files = glob('./' . $path . '/*');

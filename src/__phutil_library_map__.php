@@ -12,7 +12,6 @@ phutil_register_library_map(array(
     'ArcanistCodeLinter' => 'lint/linter/ArcanistEncodingLinter.php',
     'ArcanistIsortLinter' => 'lint/linter/ArcanistIsortLinter.php',
     'CoverageFieldSpecification' => 'diff/CoverageFieldSpecification.php',
-    'DesignDecisionEventListener' => 'event/DesignDecisionEventListener.php',
     'DisqusConfiguration' => 'configuration/DisqusConfiguration.php',
     'DisqusDifferentialFieldSelector' => 'diff/DisqusDifferentialFieldSpecification.php',
     'DisqusLintEngine' => 'lint/engine/DisqusLintEngine.php',
@@ -26,12 +25,13 @@ phutil_register_library_map(array(
     'SentryLogger' => 'sentrylogger/SentryLogger.php',
     'SetupPyUnitTestEngine' => 'unittest/SetupPyUnitTestEngine.php',
   ),
-  'function' => array(),
+  'function' => array(
+    'microtime_float' => 'unittest/PythonBaseUnitTestEngine.php',
+  ),
   'xmap' => array(
     'ArcanistCodeLinter' => 'ArcanistLinter',
     'ArcanistIsortLinter' => 'ArcanistExternalLinter',
     'CoverageFieldSpecification' => 'DifferentialFieldSpecification',
-    'DesignDecisionEventListener' => 'PhutilEventListener',
     'DisqusConfiguration' => 'ArcanistConfiguration',
     'DisqusDifferentialFieldSelector' => 'DifferentialFieldSelector',
     'DisqusLintEngine' => 'ArcanistLintEngine',
