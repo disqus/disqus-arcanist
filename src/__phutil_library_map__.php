@@ -11,6 +11,7 @@ phutil_register_library_map(array(
   'class' => array(
     'ArcanistCodeLinter' => 'lint/linter/ArcanistEncodingLinter.php',
     'ArcanistIsortLinter' => 'lint/linter/ArcanistIsortLinter.php',
+    'ArcanistESLintLinter' => 'lint/linter/ArcanistESLintLinter.php',
     'CoverageFieldSpecification' => 'diff/CoverageFieldSpecification.php',
     'DisqusConfiguration' => 'configuration/DisqusConfiguration.php',
     'DisqusDifferentialFieldSelector' => 'diff/DisqusDifferentialFieldSpecification.php',
@@ -31,6 +32,7 @@ phutil_register_library_map(array(
   'xmap' => array(
     'ArcanistCodeLinter' => 'ArcanistLinter',
     'ArcanistIsortLinter' => 'ArcanistExternalLinter',
+    'ArcanistESLintLinter' => 'ArcanistExternalLinter',
     'CoverageFieldSpecification' => 'DifferentialFieldSpecification',
     'DisqusConfiguration' => 'ArcanistConfiguration',
     'DisqusDifferentialFieldSelector' => 'DifferentialFieldSelector',
