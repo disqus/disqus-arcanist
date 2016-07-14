@@ -36,7 +36,10 @@ final class ArcanistESLintLinter extends ArcanistExternalLinter {
   }
 
   public function getDefaultBinary() {
-    return './node_modules/.bin/eslint';
+    return Filesystem::resolvePath(
+      './node_modules/.bin/eslint',
+      ArcanistWorkingCopyIdentity::newFromPath(getcwd())->getProjectRoot()
+    );
   }
 
   public function getVersion() {
