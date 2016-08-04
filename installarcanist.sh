@@ -26,9 +26,8 @@ echo "Updating libphutil.."
 if [ -e "$PHP_DIR/libphutil" ]; then
     arc upgrade
 else
-    git clone git://github.com/facebook/libphutil.git "$PHP_DIR/libphutil"
-    git clone git://github.com/facebook/arcanist.git "$PHP_DIR/arcanist"
-    git clone git://github.com/facebook/phabricator.git "$PHP_DIR/phabricator"
+    git clone https://secure.phabricator.com/diffusion/PHU/libphutil.git
+    git clone https://secure.phabricator.com/diffusion/ARC/arcanist.git
 fi
 
 # Install or update libdisqus
@@ -36,7 +35,7 @@ echo "Updating libdisqus.."
 if [ -e "$PHP_DIR/libdisqus" ]; then
     cd "$PHP_DIR/libdisqus" && git pull origin master
 else
-    git clone git://github.com/disqus/disqus-arcanist.git "$PHP_DIR/libdisqus"
+    git clone ssh://git@phabricator.local.disqus.net:69/diffusion/LIBDISQUS/libdisqus.git
 fi
 
 # Register arc commands
