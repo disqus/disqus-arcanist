@@ -26,8 +26,8 @@ echo "Updating libphutil.."
 if [ -e "$PHP_DIR/libphutil" ]; then
     arc upgrade
 else
-    git clone https://secure.phabricator.com/diffusion/PHU/libphutil.git
-    git clone https://secure.phabricator.com/diffusion/ARC/arcanist.git
+    git clone https://secure.phabricator.com/diffusion/PHU/libphutil.git "$PHP_DIR/libphutil"
+    git clone https://secure.phabricator.com/diffusion/ARC/arcanist.git "$PHP_DIR/arcanist"
 fi
 
 # Install or update libdisqus
