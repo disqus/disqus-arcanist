@@ -17,6 +17,7 @@ class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
         $root = $this->getWorkingCopy()->getProjectRoot();
         $script = $this->getConfiguredScript();
         $path = $this->getConfiguredTestResultPath();
+        $format = $this->getConfiguredCommandFormat();
 
         foreach (glob($root.DIRECTORY_SEPARATOR.$path."/*.xml") as $filename) {
             // Remove existing files so we cannot report old results
@@ -26,7 +27,7 @@ class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
         // Provide changed paths to process
         putenv("ARCANIST_DIFF_PATHS=".implode(PATH_SEPARATOR, $this->getPaths()));
 
-        $future = new ExecFuture('%C %s', $script, $path);
+        $future = new ExecFuture($format, $script, $path);
         $future->setCWD($root);
         $err = null;
         try {
@@ -101,6 +102,18 @@ class GenericXUnitTestEngine extends ArcanistUnitTestEngine {
             throw new ArcanistUsageException(
             "GenericXunitTestEngine: ".
             "You must configure '{$key}' to point to a path.");
+        }
+
+        return $config;
+    }
+
+    private function getConfiguredCommandFormat() {
+        $key = 'unit.genericxunit.cmd_format';
+        $config = $this->getConfigurationManager()
+         ->getConfigFromAnySource($key);
+
+        if (!$config) {
+            return '%C %s';
         }
 
         return $config;
