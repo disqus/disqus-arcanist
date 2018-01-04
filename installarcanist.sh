@@ -1,11 +1,12 @@
 #!/bin/bash
-set -e
+set -eo pipefail
+set -xv
 
 # Downloads arcanist, libphutil, etc and configures your system
 
-LOC_DIR="/usr/local"
-BIN_DIR="$LOC_DIR/bin"
-PHP_DIR="$LOC_DIR/include/php"
+: ${LOC_DIR:="/usr/local"}
+: ${BIN_DIR:="$LOC_DIR/bin"}
+: ${PHP_DIR:="$LOC_DIR/include/php"}
 
 if [ ! -w "$LOC_DIR" ]; then
     if [ -z "$SUDO_USER" ]; then
@@ -17,17 +18,16 @@ if [ ! -w "$LOC_DIR" ]; then
     fi;
 fi;
 
-if [ ! -e "$PHP_DIR" ]; then
-    mkdir -p $PHP_DIR
-fi;
+# In the name of symlinks, test twice.
+[ -e "$PHP_DIR" ] || mkdir -pv "$PHP_DIR"
 
 # Install or update libphutil
 echo "Updating libphutil.."
 if [ -e "$PHP_DIR/libphutil" ]; then
     arc upgrade
 else
-    git clone https://secure.phabricator.com/diffusion/PHU/libphutil.git "$PHP_DIR/libphutil"
-    git clone https://secure.phabricator.com/diffusion/ARC/arcanist.git "$PHP_DIR/arcanist"
+    git clone 'https://secure.phabricator.com/diffusion/PHU/libphutil.git'  "$PHP_DIR/libphutil"
+    git clone 'https://secure.phabricator.com/diffusion/ARC/arcanist.git'   "$PHP_DIR/arcanist"
 fi
 
 # Install or update libdisqus
@@ -41,16 +41,11 @@ fi
 # Register arc commands
 echo "Registering arc commands.."
 
-## create-arcconfig
-ln -fs "$PHP_DIR/libdisqus/bin/create-arcconfig" "$BIN_DIR/create-arcconfig"
-chmod +x "$BIN_DIR/create-arcconfig"
+ln -sfvr "$PHP_DIR/libdisqus/bin"/{create-arcconfig,update-arcanist} "$BIN_DIR/"
+ln -sfvr "$PHP_DIR/arcanist/scripts/arcanist.php" "$BIN_DIR/arc"
 
-## update-arcanist
-ln -fs "$PHP_DIR/libdisqus/bin/update-arcanist" "$BIN_DIR/update-arcanist"
-chmod +x "$BIN_DIR/update-arcanist"
-
-## arc
-echo "php $PHP_DIR/arcanist/scripts/arcanist.php \"\$@\"" > "$BIN_DIR/arc"
-chmod +x "$BIN_DIR/arc"
+# Because some versions of git for windows (read: non-cygwin) are simply not sane.
+# This, like you'd expect, applies to the source, not the destination, as symlinks do not use such bits.
+chmod +x "$BIN_DIR"/{create-arcconfig,update-arcanist,arc}
 
 echo "Done!"
