@@ -36,7 +36,6 @@ if [ -e "$PHP_DIR/libdisqus" ]; then
     cd "$PHP_DIR/libdisqus" && git pull origin master
 else
    git clone https://github.com/dan-disqus/disqus-arcanist.git "$PHP_DIR/libdisqus"
-   git clone git://github.com/disqus/disqus-arcanist.git "$PHP_DIR/libdisqus" 
 fi
 
 # Register arc commands
