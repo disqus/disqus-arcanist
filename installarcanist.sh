@@ -35,7 +35,7 @@ echo "Updating libdisqus.."
 if [ -e "$PHP_DIR/libdisqus" ]; then
     cd "$PHP_DIR/libdisqus" && git pull origin master
 else
-   git clone git://github.com/disqus/disqus-arcanist.git "$PHP_DIR/libdisqus" 
+   git clone https://github.com/disqus/disqus-arcanist.git "$PHP_DIR/libdisqus"
 fi
 
 # Register arc commands
