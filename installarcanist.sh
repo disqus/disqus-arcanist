@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Downloads arcanist, libphutil, etc and configures your system
+# Downloads arcanist, etc and configures your system
 
 LOC_DIR="/usr/local"
 BIN_DIR="$LOC_DIR/bin"
@@ -22,11 +22,10 @@ if [ ! -e "$PHP_DIR" ]; then
 fi;
 
 # Install or update libphutil
-echo "Updating libphutil.."
-if [ -e "$PHP_DIR/libphutil" ]; then
+echo "Updating arcanist.."
+if [ -e "$PHP_DIR/arcanist" ]; then
     arc upgrade
 else
-    git clone https://secure.phabricator.com/diffusion/PHU/libphutil.git "$PHP_DIR/libphutil"
     git clone https://secure.phabricator.com/diffusion/ARC/arcanist.git "$PHP_DIR/arcanist"
 fi
 
@@ -50,7 +49,7 @@ ln -fs "$PHP_DIR/libdisqus/bin/update-arcanist" "$BIN_DIR/update-arcanist"
 chmod +x "$BIN_DIR/update-arcanist"
 
 ## arc
-echo "php $PHP_DIR/arcanist/scripts/arcanist.php \"\$@\"" > "$BIN_DIR/arc"
+ln -fs "$PHP_DIR/arcanist/bin/arc" "$BIN_DIR/arc"
 chmod +x "$BIN_DIR/arc"
 
 echo "Done!"
